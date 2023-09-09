@@ -1,0 +1,12 @@
+.accordion-button:not(.collapsed) {
+    background-color: RGB(180,238,180);
+    color: black;
+    height: 40px;
+}
+
+.accordion-button {
+    background-color: RGB(247,247,247);
+    color: black;
+    height: 50px
+}
+

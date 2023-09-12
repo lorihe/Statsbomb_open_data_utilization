@@ -9,7 +9,7 @@ def get_layout():
         type="rect",
         x0=0, y0=0, x1=120, y1=80,
         line=dict(color='darkgrey', width=0.5, dash='solid'),
-        fillcolor='whitesmoke', layer='below'
+        fillcolor='RGB(247,245,245)', layer='below'
     )    
     
     center_line = go.layout.Shape(

@@ -52,7 +52,7 @@ app = Dash(__name__, external_stylesheets=[dbc.themes.ZEPHYR],
 
 app.title = "World Cup 2023 Data Visualization"
 
-#server = app.server
+server = app.server
 app.config.suppress_callback_exceptions = True
 
 
@@ -176,7 +176,7 @@ app.layout = dbc.Container(
                     children= [
                         html.Div(description_card(), style={"width": "90%"}),
                         html.Div(game_select_card(), style={"width": "90%"})
-                    ]
+                    ], style = {'margin-bottom': '20px'}
                 ), width={'size': 3, 'offset': 1},
                     xs={'size': 11, 'offset': 1}, sm={'size': 11, 'offset': 1}, md={'size': 11, 'offset': 1},
                     lg={'size': 3, 'offset': 1}, xl={'size': 3, 'offset': 1}
@@ -185,23 +185,36 @@ app.layout = dbc.Container(
                 html.Div(
                     id="mid-column",
                     children=[
+                        html.H6('a',
+                                style={'margin-top': '20px', 'margin-left': '-39px', 'margin-right': '-37px',
+                                       'color': 'RGB(180,238,180)', 'backgroundColor': 'RGB(180,238,180)'}),
                         html.H5('Match Overview',
                                 style={'margin-top': '110px'}),
                         html.Div([
                             html.P('Match Date:',
-                                   style={'margin-top': '20px',
-                                          'font-size': '17px'}),
+                                   style={'margin-top': '30px', 'font-size': '17px', 'font-weight': 'bold'}),
                             html.P(id = 'time',
-                                   style={'margin-top': '-10px',}),
-                            html.P(id = 'team1_string'),
-                            html.P(id = 'team1_score'),
-                            html.P(id = 'team1_manager'),
-                            html.P(id='team2_string'),
-                            html.P(id='team2_score'),
-                            html.P(id='team2_manager')]
-                        )], style = {'margin-top': '-30px', 'margin-left': '50px', 'margin-right': '30px'}
-                ), width='auto', style={"background-color":"RGB(247,247,247)"},
-
+                                   style={'margin-top': '-10px', 'color':'forestgreen'}),
+                            html.P('Match Result:',
+                                   style={'margin-top': '20px', 'font-size': '17px', 'font-weight': 'bold'}),
+                            html.P(id = 'team1_string',
+                                   style={'margin-top': '-10px', 'color':'forestgreen'}),
+                            html.P(id = 'team2_string',
+                                   style={'margin-top': '-10px', 'color':'forestgreen'}),
+                            html.P('Managers:',
+                                   style={'margin-top': '20px', 'font-size': '17px', 'font-weight': 'bold'}),
+                            html.P(id='team1_manager_string',
+                                   style={'margin-top': '-10px'}),
+                            html.P(id='team1_manager',
+                                   style={'margin-top': '-10px', 'color': 'forestgreen'}),
+                            html.P(id='team2_manager_string',
+                                   style={'margin-top': '-10px'}),
+                            html.P(id='team2_manager',
+                                   style={'margin-top': '-10px', 'color': 'forestgreen'}),
+                            ]
+                        )], style = {'margin-top': '-30px', 'margin-left': '40px', 'margin-right': '35px'}
+                ), width='auto',
+                style={"background-color":"RGB(250,247,247)"},
             ),
             dbc.Col(
                 html.Div(
@@ -210,7 +223,7 @@ app.layout = dbc.Container(
                         dbc.Spinner(children = [
                                         dcc.Graph(id="team1-plot",
                                           config={'displayModeBar': False},
-                                          style= {"margin-top": "20px", "margin-left": "40px"}),
+                                          style= {"margin-top": "20px", "margin-left": "30px"}),
                                         dcc.Graph(id = "team1-formation",
                                                   config = {'displayModeBar': False},
                                         style= {
@@ -225,7 +238,7 @@ app.layout = dbc.Container(
                         dbc.Spinner(children = [
                                     dcc.Graph(id="team2-plot",
                                       config={'displayModeBar': False},
-                                      style= {"margin-top": "-125px", "margin-left": "40px"}),
+                                      style= {"margin-top": "-125px", "margin-left": "30px"}),
                                     dcc.Graph(id="team2-formation",
                                       config={'displayModeBar': False},
                                       style={
@@ -238,7 +251,7 @@ app.layout = dbc.Container(
                                     ],
                                     size="lg", color="lightgreen"),
 
-                    ], style={"background-color":"RGB(247,247,247)", "position": "relative",
+                    ], style={"background-color":"RGB(250,247,247)", "position": "relative",
                               "margin-top": "-30px"}
                 ), width = 6, xs=12, sm=12, md=12, lg=12, xl=7, style = {'margin-right': '-180px'}
             )
@@ -262,10 +275,10 @@ def get_match(*n_clicks_values):
 @app.callback(
     Output('time', 'children'),
     Output('team1_string', 'children'),
-    Output('team1_score', 'children'),
-    Output('team1_manager', 'children'),
     Output('team2_string', 'children'),
-    Output('team2_score', 'children'),
+    Output('team1_manager_string', 'children'),
+    Output('team2_manager_string', 'children'),
+    Output('team1_manager', 'children'),
     Output('team2_manager', 'children'),
     [Input("output-div", 'children')]
 )
@@ -287,10 +300,14 @@ def get_info(selected_match):
     team1_name = ' '.join(team1.split()[:-1])
     team2_name = ' '.join(team2.split()[:-1])
 
-    team1_string = f"{team1_name} score:"
-    team2_string = f"{team2_name} score:"
+    team1_string = f"{team1_name} score: {team1_score}"
+    team2_string = f"{team2_name} score: {team2_score}"
 
-    return time, team1_string, team1_score, team1_manager, team2_string, team2_score, team2_manager
+    team1_manager_string = f"{team1_name} manager:"
+    team2_manager_string = f"{team2_name} manager:"
+
+    return (time, team1_string, team2_string, team1_manager_string, team2_manager_string,
+            team1_manager, team2_manager)
 
 @app.callback(
     Output('team1-plot', 'figure'),

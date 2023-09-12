@@ -68,7 +68,7 @@ def plot(team1_name, team1_tuples, team2_tuples):
 
     fig = go.Figure(layout=field_layout)
     fig.update_layout(title=dict(text=f'{team1_name} Tactic Plot', x=0.41, y=0.91),
-                      title_font=dict(size=18, color='black'),
+                      title_font=dict(family = "Roboto, sans-serif", size=18, color='forestgreen'),
                       width=1080, height=720, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor='rgba(0,0,0,0)',
                       margin=dict(l=0, r=0, t=0, b=0),
                       xaxis=dict(showgrid=False, zeroline=False), yaxis=dict(showgrid=False, zeroline=False),
@@ -78,10 +78,10 @@ def plot(team1_name, team1_tuples, team2_tuples):
 
 
     fig.update_layout(modebar_remove= ["lasso", "select"])
-    fig.update_layout(dragmode= "pan")
+    fig.update_layout(dragmode= False)
 
     fig.add_trace(go.Scatter(x = [None], y = [None], legendgroup = 'carry', name = 'opponent carry (>3.5s)',
-                            mode='lines', line=dict(color=carry, width = 1.6, dash = 'dashdot')))
+                            mode='lines', line=dict(color=carry, width = 1.8, dash = 'dashdot')))
     for e in team2_tuples[4]:
         fig.add_trace(go.Scatter(
             x = [120-e['location'][0], 120-e['carry']['end_location'][0]],
@@ -142,7 +142,7 @@ def plot(team1_name, team1_tuples, team2_tuples):
             legendgroup = 'no goal shots',
             showlegend = False,
             mode='markers',
-            marker=dict( size=6, symbol = 'circle', color=no_goal, opacity=0.2)
+            marker=dict( size=6, symbol = 'circle', color=no_goal, opacity=0.3)
         ))        
     for key, seq in team1_tuples[3].items():
         fig.add_trace(go.Scatter(
@@ -151,7 +151,7 @@ def plot(team1_name, team1_tuples, team2_tuples):
             legendgroup = 'no goal shots',
             showlegend = False,
             mode='lines',
-            line=dict(color=no_goal, width = 0.6)
+            line=dict(color=no_goal, width = 0.7)
         ))      
         
     for key, seq in team1_tuples[2].items():
@@ -161,7 +161,7 @@ def plot(team1_name, team1_tuples, team2_tuples):
             legendgroup = 'goal shots',
             showlegend = False,
             mode='markers',
-            marker=dict(size=6, symbol = 'circle', color=goal, opacity=0.2)
+            marker=dict(size=6, symbol = 'circle', color=goal, opacity=0.3)
         ))        
     for key, seq in team1_tuples[2].items():
         fig.add_trace(go.Scatter(
@@ -196,7 +196,7 @@ def plot2(team1_name, team1_tuples, team2_tuples):
 
     fig = go.Figure(layout=field_layout)
     fig.update_layout(title=dict(text=f'{team1_name} Tactic Plot', x=0.41, y=0.91),
-                      title_font=dict(size=18, color='black'),
+                      title_font=dict(family = "Roboto, sans-serif", size=18, color='forestgreen'),
                       width=1080, height=720, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor='rgba(0,0,0,0)',
                       margin=dict(l=0, r=0, t=0, b=0),
                       xaxis=dict(showgrid=False, zeroline=False), yaxis=dict(showgrid=False, zeroline=False),
@@ -205,10 +205,10 @@ def plot2(team1_name, team1_tuples, team2_tuples):
                       )
 
     fig.update_layout(modebar_remove=["lasso", "select"])
-    fig.update_layout(dragmode="pan")
+    fig.update_layout(dragmode=False)
 
     fig.add_trace(go.Scatter(x=[None], y=[None], legendgroup='carry', name='opponent carry (>3.5s)',
-                             mode='lines', line=dict(color=carry, width=1.6, dash='dashdot')))
+                             mode='lines', line=dict(color=carry, width=1.8, dash='dashdot')))
     for e in team2_tuples[4]:
         fig.add_trace(go.Scatter(
             x=[e['location'][0], e['carry']['end_location'][0]],
@@ -269,7 +269,7 @@ def plot2(team1_name, team1_tuples, team2_tuples):
             legendgroup='no goal shots',
             showlegend=False,
             mode='markers',
-            marker=dict(size=6, symbol='circle', color=no_goal, opacity=0.2)
+            marker=dict(size=6, symbol='circle', color=no_goal, opacity=0.3)
         ))
     for key, seq in team1_tuples[3].items():
         fig.add_trace(go.Scatter(
@@ -278,17 +278,17 @@ def plot2(team1_name, team1_tuples, team2_tuples):
             legendgroup='no goal shots',
             showlegend=False,
             mode='lines',
-            line=dict(color=no_goal, width=0.6)
+            line=dict(color=no_goal, width=0.7)
         ))
 
     for key, seq in team1_tuples[2].items():
         fig.add_trace(go.Scatter(
-            x=120-[e['location'][0] for e in seq[:-1]],
+            x=[120-e['location'][0] for e in seq[:-1]],
             y=[80-e['location'][1] for e in seq[:-1]],
             legendgroup='goal shots',
             showlegend=False,
             mode='markers',
-            marker=dict(size=6, symbol='circle', color=goal, opacity=0.2)
+            marker=dict(size=6, symbol='circle', color=goal, opacity=0.3)
         ))
     for key, seq in team1_tuples[2].items():
         fig.add_trace(go.Scatter(
@@ -352,10 +352,9 @@ def formation(team1_name, team1_tuples):
                 y=[position_dict[i][1] for i in position_ids],
                 mode='markers',
                 name=f'tactical shift {m}:{s}',
-                marker=dict(size=8, symbol='circle', color='wheat'),
+                marker=dict(size=8, symbol='circle', color='tan'),
                 visible='legendonly'
         ))
-
     return fig
 
 def formation2(team1_name, team1_tuples):
@@ -391,7 +390,7 @@ def formation2(team1_name, team1_tuples):
                 y=[80-position_dict[i][1] for i in position_ids],
                 mode='markers',
                 name=f'tactical shift {m}:{s}',
-                marker=dict(size=8, symbol='circle', color='wheat'),
+                marker=dict(size=8, symbol='circle', color='tan'),
                 visible='legendonly'
             ))
     return fig

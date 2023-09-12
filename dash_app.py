@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np
 import requests
 
-from tacticplot import plot, get_events, formation
+from tacticplot import plot, plot2, get_events, formation, formation2
 
 def load_json(url):
     response = requests.get(url)
@@ -47,24 +47,22 @@ team_dict = {match['match_id']:
 
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.ZEPHYR],
-          meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1"}])
+          meta_tags=[{"name": "viewport", "content": "width=device-width,"
+                      "initial-scale=1, maximum-scale=1, maximum-scale=1"}])
 
 app.title = "World Cup 2023 Data Visualization"
 
-server = app.server
+#server = app.server
 app.config.suppress_callback_exceptions = True
 
 
 def description_card():
-    """
 
-    :return: A Div containing dashboard title & descriptions.
-    """
     return html.Div(
         id="description",
         children=[
             html.H5("Statsbomb Open Data Visualization",
-                    style = {"width": "100%", "font-weight": "bold", 'color': 'dark-grey'}),
+                    style = {"width": "90%", "font-weight": "bold", 'color': 'dark-grey'}),
             html.Img(src=app.get_asset_url("statsbomb.png"),
                      style={"width": "60%", "height": "auto", "margin-bottom": "20px",
                             "margin-left": "18px"}),
@@ -155,11 +153,22 @@ app.layout = dbc.Container(
     fluid=True,
     children=[
         dbc.Row(
-            dbc.Col(
-                html.Div(id="banner", className="banner", children=[html.H6("Lori")]),
-                width={'size':2, 'offset':1}
-            )
+            html.Div([
+                html.Div(id="banner1", className="banner",
+                         children=[
+                             html.Img(src=app.get_asset_url("github.jpg"),
+                                      style={"height": "24px", "margin-top": "3px", 'margin-left': '73px'})
+                         ]),
+                html.Div(id="banner2", className="banner",
+                         children=[
+                             dbc.NavLink("by Lori He",
+                                         href="https://github.com/lorihe/Statsbomb_open_data_utilization",
+                                     style={'margin-left': '105px', 'margin-top': '-25px', 'color': 'honeydew'})
+                         ]),
+            ]),
+            style={"height": "30px", "background-color": "black", 'margin-bottom': '10px'},
         ),
+
         dbc.Row([
             dbc.Col(
                 html.Div(
@@ -168,39 +177,70 @@ app.layout = dbc.Container(
                         html.Div(description_card(), style={"width": "90%"}),
                         html.Div(game_select_card(), style={"width": "90%"})
                     ]
-                ), width={'size': 3, 'offset': 1}
+                ), width={'size': 3, 'offset': 1},
+                    xs={'size': 11, 'offset': 1}, sm={'size': 11, 'offset': 1}, md={'size': 11, 'offset': 1},
+                    lg={'size': 3, 'offset': 1}, xl={'size': 3, 'offset': 1}
             ),
             dbc.Col(
                 html.Div(
                     id="mid-column",
                     children=[
                         html.H5('Match Overview',
-                                style = {'margin-top': '100px', 'margin-left': '50px', 'margin-right': '30px'}),
+                                style={'margin-top': '110px'}),
+                        html.Div([
+                            html.P('Match Date:',
+                                   style={'margin-top': '20px',
+                                          'font-size': '17px'}),
+                            html.P(id = 'time',
+                                   style={'margin-top': '-10px',}),
+                            html.P(id = 'team1_string'),
+                            html.P(id = 'team1_score'),
+                            html.P(id = 'team1_manager'),
+                            html.P(id='team2_string'),
+                            html.P(id='team2_score'),
+                            html.P(id='team2_manager')]
+                        )], style = {'margin-top': '-30px', 'margin-left': '50px', 'margin-right': '30px'}
+                ), width='auto', style={"background-color":"RGB(247,247,247)"},
 
-                    ]
-                ), width='auto', style={"background-color":"RGB(247,247,247)"}
             ),
             dbc.Col(
                 html.Div(
                     id="right-column",
                     children=[
-                        dbc.Spinner(children = [dcc.Graph(id="team1-plot")],
-                                   size="lg", color="primary"),
-                        dbc.Spinner(children = [dcc.Graph(id="team2-plot",
-                                                          style= {"margin-top": "-80px"})],
-                                   size="lg", color="primary"),
-                        html.Div(
-                            dcc.Graph(id = "team1-formation"),
-                            style= {
-                                "position": "absolute",
-                                "top": "420px",
-                                "left": "890px",
-                                "z-index": "2",
-                            }
+                        dbc.Spinner(children = [
+                                        dcc.Graph(id="team1-plot",
+                                          config={'displayModeBar': False},
+                                          style= {"margin-top": "20px", "margin-left": "40px"}),
+                                        dcc.Graph(id = "team1-formation",
+                                                  config = {'displayModeBar': False},
+                                        style= {
+                                            "width": "180px", "height" : "250px",
+                                            "position": "absolute",
+                                            "top": "380px",
+                                            "left": "935px",
+                                            "z-index": "2",
+                                        })
+                                   ],
+                                    size="lg", color="lightgreen"),
+                        dbc.Spinner(children = [
+                                    dcc.Graph(id="team2-plot",
+                                      config={'displayModeBar': False},
+                                      style= {"margin-top": "-125px", "margin-left": "40px"}),
+                                    dcc.Graph(id="team2-formation",
+                                      config={'displayModeBar': False},
+                                      style={
+                                          "width": "180px", "height": "250px",
+                                          "position": "absolute",
+                                          "top": "935px",
+                                          "left": "935px",
+                                          "z-index": "2",
+                                      })
+                                    ],
+                                    size="lg", color="lightgreen"),
 
-                        )
-                    ], style={"background-color":"RGB(247,247,247)", "position": "relative"}
-                ), width = 6
+                    ], style={"background-color":"RGB(247,247,247)", "position": "relative",
+                              "margin-top": "-30px"}
+                ), width = 6, xs=12, sm=12, md=12, lg=12, xl=7, style = {'margin-right': '-180px'}
             )
         ], className="h-100 g-0")
     ])
@@ -212,28 +252,63 @@ input_matches = [Input(match, "n_clicks") for match in match_list]
 )
 def get_match(*n_clicks_values):
     clicked_match_id = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
-    return clicked_match_id
+    if not clicked_match_id:
+        match_id = 3906390
+    else:
+        match_id = int(clicked_match_id)
 
+    return match_id
+
+@app.callback(
+    Output('time', 'children'),
+    Output('team1_string', 'children'),
+    Output('team1_score', 'children'),
+    Output('team1_manager', 'children'),
+    Output('team2_string', 'children'),
+    Output('team2_score', 'children'),
+    Output('team2_manager', 'children'),
+    [Input("output-div", 'children')]
+)
+def get_info(selected_match):
+
+    url_WC_2023 = 'https://raw.githubusercontent.com/statsbomb/open-data/master/data/matches/72/107.json'
+    json_data_2023 = load_json(url_WC_2023)
+
+    match_info = [m for m in json_data_2023 if m['match_id'] == selected_match][0]
+    time = match_info['match_date']
+    team1_score = match_info['home_score']
+    team2_score = match_info['away_score']
+    team1_manager = match_info['home_team']['managers'][0]['name']
+    team2_manager = match_info['away_team']['managers'][0]['name']
+
+    team1 = team_dict[selected_match][0]
+    team2 = team_dict[selected_match][1]
+
+    team1_name = ' '.join(team1.split()[:-1])
+    team2_name = ' '.join(team2.split()[:-1])
+
+    team1_string = f"{team1_name} score:"
+    team2_string = f"{team2_name} score:"
+
+    return time, team1_string, team1_score, team1_manager, team2_string, team2_score, team2_manager
 
 @app.callback(
     Output('team1-plot', 'figure'),
     Output('team2-plot', 'figure'),
     Output('team1-formation', 'figure'),
+    Output('team2-formation', 'figure'),
     [Input("output-div", 'children')]
 )
 def update_plot(selected_match):
-    if not selected_match:
-        match_id = 3906390
-    else:
-        match_id = int(selected_match)
+    match_id = int(selected_match)
     team1 = team_dict[match_id][0]
     team2 = team_dict[match_id][1]
 
-    url = f'https://raw.githubusercontent.com/statsbomb/open-data/master/data/events/{match_id}.json'
-    match_events = load_json(url)
-
     team1_name = ' '.join(team1.split()[:-1])
     team2_name = ' '.join(team2.split()[:-1])
+
+    url = f'https://raw.githubusercontent.com/statsbomb/open-data/master/data/events/{match_id}.json'
+    match_events = load_json(url)
 
     team1_events = [event for event in match_events if event['team']['name'] == team1]
     team1_tuples = get_events(team1_events)
@@ -242,12 +317,13 @@ def update_plot(selected_match):
     team2_tuples = get_events(team2_events)
 
     fig1 = plot(team1_name, team1_tuples, team2_tuples)
-    fig2 = plot(team2_name, team2_tuples, team1_tuples)
+    fig2 = plot2(team2_name, team2_tuples, team1_tuples)
 
-    fig3 = formation(team1_tuples)
+    fig3 = formation(team1_name, team1_tuples)
+    fig4 = formation2(team2_name, team2_tuples)
 
-    return fig1, fig2, fig3
+    return fig1, fig2, fig3, fig4
     
 
 if __name__ == '__main__':
-    app.run_server(debug=True, port=1000)
+    app.run_server(debug=True, port=1020)

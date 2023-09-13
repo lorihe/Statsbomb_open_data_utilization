@@ -167,7 +167,8 @@ app.layout = dbc.Container(
                                      style={'margin-left': '105px', 'margin-top': '-25px', 'color': 'honeydew'})
                          ]),
             ]),
-            style={"height": "30px", "background-color": "black", 'margin-bottom': '10px'},
+            style={"height": "30px", "background-color": "black", 'margin-bottom': '10px',
+                   "z-index": "2",},
         ),
 
         dbc.Row([
@@ -177,13 +178,13 @@ app.layout = dbc.Container(
                         html.Div(description_card(), style={"width": "90%"}),
                         html.Div(game_select_card(), style={"width": "90%"})
                     ], style = {'margin-bottom': '20px'}
-                ), width=3,
-                    xs={'size': 11}, sm={'size': 11}, md={'size': 11},
-                    lg={'size': 3}, xl={'size': 3},
-                    style = {'margin-left': '60px'}
+                ), xs={'size': 12}, sm={'size': 12}, md={'size': 12},
+                   lg={'size': 12}, xl={'size': 3},
+                   style = {'margin-left': '80px', 'margin-right': '-30px', }
             ),
             dbc.Col(
                 html.Div(
+                    id = 'column',
                     children=[
                         html.H6('a',
                                 style={'margin-left': '-29px', 'margin-right': '-110px',
@@ -214,9 +215,9 @@ app.layout = dbc.Container(
                             ]
                         )], style = {'margin-left': '30px', 'margin-right': '140px'}
                 ),
-                width=2, xs={'size': 12,'margin-left': '40px'}, xl={'size': 2},
-                style={"background-color":"RGB(250,247,247)", 'margin-top': '-10px',
-                       'margin-left': '-40px', 'margin-bottom': '20px'},
+                xs=12, sm=12, md=12, lg=2, xl = 2,
+                style={"background-color":"RGB(250,247,247)", 'margin-right': '-140px', 'margin-top': '-10px',
+                       'margin-bottom': '20px', 'height': '1300px'},
             ),
             dbc.Col(
                 html.Div(
@@ -236,6 +237,7 @@ app.layout = dbc.Container(
                                         })
                                    ],
                                     size="lg", color="lightgreen"),
+
                         dbc.Spinner(children = [
                                     dcc.Graph(id="team2-plot",
                                       config={'displayModeBar': False},
@@ -253,15 +255,15 @@ app.layout = dbc.Container(
                                     size="lg", color="lightgreen"),
 
                     ], style={"background-color":"RGB(250,247,247)", "position": "relative",
-                              "margin-top": "-30px", 'margin-left': '-140px', 'height': '1350px',
-                              "margin-botoom": "20px",}
-                ), width = 6, xs=12, sm=12, md=12, lg=12, xl=6,
+                              "margin-top": "-10px", 'height': '1300px',
+                              "margin-bottom": "20px", 'margin-right': '-40px', "overflow-x": "auto"}
+                ), xs=12, sm=12, md=12, lg=6, xl=6,
             ),
             dbc.Col(
                 html.Div(
                     children=[
                         html.H6('a',
-                                style={'margin-right': '-100px',
+                                style={'width': '280px',
                                        'color': 'RGB(180,238,180)', 'backgroundColor': 'RGB(180,238,180)'}),
                         html.P('Notes',
                                 style={'margin-top': '10px', 'text-decoration': 'underline'}),
@@ -298,14 +300,15 @@ app.layout = dbc.Container(
                                    style={'font-size': '14px', 'margin-top': '-15px'}),
                             html.P("| The usage of this data is for non-profit educational purpose only. |",
                                    style={'font-size': '13px', 'margin-top': '335px'}),
-                        ]
-                        )], style={'margin-left': '-100px', 'margin-right': '60px'}
+                        ],
+                    )], style = {'margin-right': '30px'}
                 ),
-                width=1, xs={'size':12},
+                xs=12, sm=12, md=12, lg=1, xl=1,
                 style={"background-color": "RGB(250,247,247)",
-                       'margin-top': '-10px', 'margin-right': '-200px', "z-index": "2"},
+                       'margin-top': '-10px', 'margin-bottom': '20px',
+                       'height': '1300px', 'width': '280px', "z-index": "2"},
             ),
-        ], className="h-100 g-0")
+        ], className="h-100 g-0 m-0")
     ])
 
 input_matches = [Input(match, "n_clicks") for match in match_list]

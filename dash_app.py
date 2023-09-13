@@ -2,22 +2,22 @@ import dash
 from dash import Dash, html, dcc
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input,Output
-import plotly.graph_objects as go
-import plotly.express as px
-
-import pandas as pd
-import numpy as np
 import requests
 
 from tacticplot import plot, plot2, get_events, formation, formation2
 
 def load_json(url):
+    '''
+    Load json data from the given URL.
+    '''
     response = requests.get(url)
     return response.json()
 
+# Load the URL of match data for World Cup 2023 from Statsbomb
 url_WC_2023 = 'https://raw.githubusercontent.com/statsbomb/open-data/master/data/matches/72/107.json'
 json_data_2023 = load_json(url_WC_2023)
 
+# Sort stage group for user to select match
 stage_dict = {}
 for match in json_data_2023:
     stage_name = match['competition_stage']['name']
@@ -25,11 +25,11 @@ for match in json_data_2023:
     
     if stage_name not in stage_dict:
         stage_dict[stage_name] = []
-    
     stage_dict[stage_name].append(match_id)
 
 stage_dict['Group Stage'] = sorted(stage_dict['Group Stage'])
 
+# Pair match id and match name for user to select match
 match_dict = {str(match["match_id"]): 
     f"{match['home_team']['country']['name']} vs. {match['away_team']['country']['name']}"
     for match in json_data_2023}
@@ -37,15 +37,15 @@ match_dict = {str(match["match_id"]):
 match_dict = {key: value.replace('Korea\xa0(South)', 'South Korea') for key, value in match_dict.items()}
 match_dict = {key: value.replace('United States of America', 'USA') for key, value in match_dict.items()}
 
+# Get a full list of match ids
 match_list = [str(match['match_id']) for match in json_data_2023]
 
+# Get a dictionary with match ids as keys and a tuple of both teams in that match as value
 team_dict = {match['match_id']: 
     (match['home_team']['home_team_name'], match['away_team']['away_team_name'])
     for match in json_data_2023}
 
-
-
-
+# Build the app
 app = Dash(__name__, external_stylesheets=[dbc.themes.ZEPHYR],
           meta_tags=[{"name": "viewport", "content": "width=device-width,"
                       "initial-scale=1, maximum-scale=1, maximum-scale=1"}])
@@ -55,9 +55,11 @@ app.title = "World Cup 2023 Data Visualization"
 server = app.server
 app.config.suppress_callback_exceptions = True
 
-
 def description_card():
-
+    '''
+    :return: An HTML Div element introducing the app.
+    :rtype: dash_html_components.Div
+    '''
     return html.Div(
         id="description",
         children=[
@@ -72,7 +74,7 @@ def description_card():
                 children="Great appreciation towards Statsbomb for sharing valuable data of the "
                          "Women's World Cup 2023, as part of their commitment to support women's soccer. "
                          "This project visualizes the data with an emphasis on team tactics, aiming to extend "
-                         "its usage and recognition",
+                         "its usage and recognition.",
                 style={"font-size": "14px"}
 
             ),
@@ -83,7 +85,10 @@ def description_card():
     )
 
 def game_select_card():
-
+    '''
+    :return: An HTML Div element providing accordion menu for match selection.
+    :rtype: dash_html_components.Div
+    '''
     return html.Div([
         dbc.Accordion(
           [
@@ -150,9 +155,11 @@ def game_select_card():
 
     ])
 
+# App layout
 app.layout = dbc.Container(
     fluid=True,
     children=[
+        # First row is the banner
         dbc.Row(
             html.Div([
                 html.Div(id="banner1", className="banner",
@@ -171,7 +178,9 @@ app.layout = dbc.Container(
                    "z-index": "2",},
         ),
 
+        # Second row is content
         dbc.Row([
+            # First column is app description and match selection menu
             dbc.Col(
                 html.Div(
                     children= [
@@ -182,6 +191,8 @@ app.layout = dbc.Container(
                    lg={'size': 12}, xl={'size': 3},
                    style = {'margin-left': '80px', 'margin-right': '-30px', }
             ),
+
+            # Second column shows match overview information
             dbc.Col(
                 html.Div(
                     id = 'column',
@@ -198,6 +209,8 @@ app.layout = dbc.Container(
                                    style={'margin-top': '-10px', 'color':'forestgreen'}),
                             html.P('Match Result:',
                                    style={'margin-top': '20px', 'font-size': '17px', 'font-weight': 'bold'}),
+                            html.P('(Regular and extra time)',
+                                   style={'margin-top': '-20px', 'font-size': '16px'}),
                             html.P(id = 'team1_string',
                                    style={'margin-top': '-10px', 'color':'forestgreen'}),
                             html.P(id = 'team2_string',
@@ -219,6 +232,8 @@ app.layout = dbc.Container(
                 style={"background-color":"RGB(250,247,247)", 'margin-right': '-140px', 'margin-top': '-10px',
                        'margin-bottom': '20px', 'height': '1300px'},
             ),
+
+            # Third column shows the plots
             dbc.Col(
                 html.Div(
                     children=[
@@ -259,6 +274,8 @@ app.layout = dbc.Container(
                               "margin-bottom": "20px", 'margin-right': '-40px', "overflow-x": "auto"}
                 ), xs=12, sm=12, md=12, lg=6, xl=6,
             ),
+
+            # Forth columns shows the notes
             dbc.Col(
                 html.Div(
                     children=[
@@ -299,7 +316,7 @@ app.layout = dbc.Container(
                                    "turn layer on or off. Double-click turns on all layers. Double-click again isolates the selected layer.",
                                    style={'font-size': '14px', 'margin-top': '-15px'}),
                             html.P("| The usage of this data is for non-profit educational purpose only. |",
-                                   style={'font-size': '13px', 'margin-top': '335px'}),
+                                   style={'font-size': '13px', 'margin-top': '355px'}),
                         ],
                     )], style = {'margin-right': '30px'}
                 ),
@@ -311,6 +328,7 @@ app.layout = dbc.Container(
         ], className="h-100 g-0 m-0")
     ])
 
+# Callback 1: Input - button click from match selection memu. Output - match id.
 input_matches = [Input(match, "n_clicks") for match in match_list]
 @app.callback(
     Output("output-div", "children"),
@@ -325,6 +343,7 @@ def get_match(*n_clicks_values):
 
     return match_id
 
+# Callback 2: Input - match id from callback 1. Output - a bunch of strings displayed in match overview.
 @app.callback(
     Output('time', 'children'),
     Output('team1_string', 'children'),
@@ -336,10 +355,10 @@ def get_match(*n_clicks_values):
     [Input("output-div", 'children')]
 )
 def get_info(selected_match):
-
-    url_WC_2023 = 'https://raw.githubusercontent.com/statsbomb/open-data/master/data/matches/72/107.json'
-    json_data_2023 = load_json(url_WC_2023)
-
+    '''
+    :param selected_match: match id from callback 1
+    :return: a bunch of strings
+    '''
     match_info = [m for m in json_data_2023 if m['match_id'] == selected_match][0]
     time = match_info['match_date']
     team1_score = match_info['home_score']
@@ -362,6 +381,7 @@ def get_info(selected_match):
     return (time, team1_string, team2_string, team1_manager_string, team2_manager_string,
             team1_manager, team2_manager)
 
+# Callback 3: Input - match id from callback 1. Output - tactic plot and formation plot for both teams
 @app.callback(
     Output('team1-plot', 'figure'),
     Output('team2-plot', 'figure'),
@@ -370,6 +390,10 @@ def get_info(selected_match):
     [Input("output-div", 'children')]
 )
 def update_plot(selected_match):
+    '''
+    :param selected_match: match id from callback 1
+    :return: A tuple containing four plot figures.
+    '''
     match_id = int(selected_match)
     team1 = team_dict[match_id][0]
     team2 = team_dict[match_id][1]
@@ -377,15 +401,18 @@ def update_plot(selected_match):
     team1_name = ' '.join(team1.split()[:-1])
     team2_name = ' '.join(team2.split()[:-1])
 
+    # Load event data from Statsbomb
     url = f'https://raw.githubusercontent.com/statsbomb/open-data/master/data/events/{match_id}.json'
     match_events = load_json(url)
 
+    # Get tuples of team actions using imported local module
     team1_events = [event for event in match_events if event['team']['name'] == team1]
     team1_tuples = get_events(team1_events)
 
     team2_events = [event for event in match_events if event['team']['name'] == team2]
     team2_tuples = get_events(team2_events)
 
+    # Generate plots using imported local module
     fig1 = plot(team1_name, team1_tuples, team2_tuples)
     fig2 = plot2(team2_name, team2_tuples, team1_tuples)
 

@@ -177,7 +177,7 @@ app.layout = dbc.Container(
                         html.Div(description_card(), style={"width": "90%"}),
                         html.Div(game_select_card(), style={"width": "90%"})
                     ], style = {'margin-bottom': '20px'}
-                ), width={'size': 3},
+                ), width=3,
                     xs={'size': 11}, sm={'size': 11}, md={'size': 11},
                     lg={'size': 3}, xl={'size': 3},
                     style = {'margin-left': '60px'}
@@ -214,8 +214,9 @@ app.layout = dbc.Container(
                             ]
                         )], style = {'margin-left': '30px', 'margin-right': '140px'}
                 ),
-                width=2,
-                style={"background-color":"RGB(250,247,247)", 'margin-top': '-10px', 'margin-left': '-40px'},
+                width=2, xs={'size': 12,'margin-left': '40px'}, xl={'size': 2},
+                style={"background-color":"RGB(250,247,247)", 'margin-top': '-10px',
+                       'margin-left': '-40px', 'margin-bottom': '20px'},
             ),
             dbc.Col(
                 html.Div(
@@ -252,7 +253,8 @@ app.layout = dbc.Container(
                                     size="lg", color="lightgreen"),
 
                     ], style={"background-color":"RGB(250,247,247)", "position": "relative",
-                              "margin-top": "-30px", 'margin-left': '-140px', 'height': '1350px'}
+                              "margin-top": "-30px", 'margin-left': '-140px', 'height': '1350px',
+                              "margin-botoom": "20px",}
                 ), width = 6, xs=12, sm=12, md=12, lg=12, xl=6,
             ),
             dbc.Col(
@@ -299,7 +301,7 @@ app.layout = dbc.Container(
                         ]
                         )], style={'margin-left': '-100px', 'margin-right': '60px'}
                 ),
-                width=1,
+                width=1, xs={'size':12},
                 style={"background-color": "RGB(250,247,247)",
                        'margin-top': '-10px', 'margin-right': '-200px', "z-index": "2"},
             ),

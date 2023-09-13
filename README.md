@@ -3,4 +3,4 @@ Great appreciation towards [Statsbomb](https://statsbomb.com/) for sharing valua
 
 Open the app at: https://world-cup-2023-tactic-visualization.onrender.com/
 
-The app was [Plotly Dash](https://plotly.com/), a Python framework for building interactive web applications. It's deployed on [render](https://dashboard.render.com/).
+The app was built with [Plotly Dash](https://plotly.com/), a Python framework for building interactive web applications. It's deployed on [render](https://dashboard.render.com/).

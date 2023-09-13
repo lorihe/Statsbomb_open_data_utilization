@@ -30,9 +30,9 @@ passes = 'RGB(26,26,26)'
 def get_events(events):
     
     goal_events = [e for e in events if e['type']['id'] == 16 and 
-            e['shot']['outcome']['name'] == 'Goal']
+            e['shot']['outcome']['name'] == 'Goal' and e['period'] != 5]
     no_goal_events = [e for e in events if e['type']['id'] == 16 and 
-            e['shot']['outcome']['name'] != 'Goal']    
+            e['shot']['outcome']['name'] != 'Goal' and e['period'] != 5]
 
     goal_seq = {}
     for e in goal_events:        
@@ -67,12 +67,13 @@ def plot(team1_name, team1_tuples, team2_tuples):
     field_layout = soccerfield.get_layout()
 
     fig = go.Figure(layout=field_layout)
-    fig.update_layout(title=dict(text=f'{team1_name} Tactic Plot', x=0.41, y=0.91),
+    fig.update_layout(title=dict(text=f'{team1_name} Tactic Plot',
+                                 xanchor="left", x=0.8, y=0.89),
                       title_font=dict(family = "Roboto, sans-serif", size=18, color='forestgreen'),
-                      width=1080, height=720, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor='rgba(0,0,0,0)',
-                      margin=dict(l=0, r=0, t=0, b=0),
+                      width=1120, height=680, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor='rgba(0,0,0,0)',
+                      margin=dict(l=0, r=100, t=0, b=0),
                       xaxis=dict(showgrid=False, zeroline=False), yaxis=dict(showgrid=False, zeroline=False),
-                      legend=dict(xanchor="left", x=1, y=0.88,
+                      legend=dict(xanchor="left", x=1, y=0.85,
                                   font = dict(family = "Roboto, sans-serif", size = 14))
                       )
 
@@ -92,7 +93,7 @@ def plot(team1_name, team1_tuples, team2_tuples):
             line=dict(color=carry, width = 1.6, dash = 'dashdot')
         ))
 
-    fig.add_trace(go.Scatter(x = [None], y = [None], legendgroup = 'passes', name = 'opponent long pass-success',
+    fig.add_trace(go.Scatter(x = [None], y = [None], legendgroup = 'passes', name = 'opponent long pass (>40 yards)',
                         mode='lines+markers',
                         marker = dict(symbol = 'circle-open', color = passes, size = 8),
                         line=dict(color=passes, width = 0.8, dash = 'dot')))
@@ -124,7 +125,7 @@ def plot(team1_name, team1_tuples, team2_tuples):
         legendgroup = 'no goal shots',
         name = 'shots w/ no goal',
         mode='markers',
-        marker=dict(size=6 , symbol = 'circle', color=no_goal)))
+        marker=dict(size=7 , symbol = 'circle', color=no_goal)))
     
     fig.add_trace(go.Scatter(
         x = [e['location'][0] for e in team1_tuples[0]],
@@ -195,12 +196,13 @@ def plot2(team1_name, team1_tuples, team2_tuples):
     field_layout = soccerfield.get_layout()
 
     fig = go.Figure(layout=field_layout)
-    fig.update_layout(title=dict(text=f'{team1_name} Tactic Plot', x=0.41, y=0.91),
+    fig.update_layout(title=dict(text=f'{team1_name} Tactic Plot',
+                                 xanchor="left", x=0.80, y=0.89),
                       title_font=dict(family = "Roboto, sans-serif", size=18, color='forestgreen'),
-                      width=1080, height=720, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor='rgba(0,0,0,0)',
-                      margin=dict(l=0, r=0, t=0, b=0),
+                      width=1120, height=680, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor='rgba(0,0,0,0)',
+                      margin=dict(l=0, r=100, t=0, b=0),
                       xaxis=dict(showgrid=False, zeroline=False), yaxis=dict(showgrid=False, zeroline=False),
-                      legend=dict(xanchor="left", x=1, y=0.88,
+                      legend=dict(x=1, y=0.85,
                                   font = dict(family = "Roboto, sans-serif", size = 14))
                       )
 
@@ -219,7 +221,7 @@ def plot2(team1_name, team1_tuples, team2_tuples):
             line=dict(color=carry, width=1.6, dash='dashdot')
         ))
 
-    fig.add_trace(go.Scatter(x=[None], y=[None], legendgroup='passes', name='opponent long pass-success',
+    fig.add_trace(go.Scatter(x=[None], y=[None], legendgroup='passes', name='opponent long pass (>40 yards)',
                              mode='lines+markers',
                              marker=dict(symbol='circle-open', color=passes, size=8),
                              line=dict(color=passes, width=0.8, dash='dot')))
@@ -251,7 +253,7 @@ def plot2(team1_name, team1_tuples, team2_tuples):
         legendgroup='no goal shots',
         name='shots w/ no goal',
         mode='markers',
-        marker=dict(size=6, symbol='circle', color=no_goal)))
+        marker=dict(size=7, symbol='circle', color=no_goal)))
 
     fig.add_trace(go.Scatter(
         x=[120-e['location'][0] for e in team1_tuples[0]],
@@ -324,7 +326,8 @@ def formation(team1_name, team1_tuples):
 
     fig = go.Figure(layout=field_layout)
     fig.update_layout(title=dict(text=f'{team1_name} Formation',
-                                 yanchor="middle", x=0.5, y = 0.95),
+                                 yanchor="middle", x=0.5, y = 0.95, ),
+                      title_font=dict(family="Roboto, sans-serif", size=14),
                       margin=dict(l=0, r=0, t=0, b=70),
                       xaxis=dict(showgrid=False, zeroline=False), yaxis=dict(showgrid=False, zeroline=False),
                       legend=dict(xanchor="left", yanchor="middle",
@@ -364,6 +367,7 @@ def formation2(team1_name, team1_tuples):
     fig = go.Figure(layout=field_layout)
     fig.update_layout(title=dict(text=f'{team1_name} Formation',
                                  yanchor="middle", x=0.5, y=0.95),
+                      title_font=dict(family="Roboto, sans-serif", size=14),
                       margin=dict(l=0, r=0, t=0, b=70),
                       xaxis=dict(showgrid=False, zeroline=False), yaxis=dict(showgrid=False, zeroline=False),
                       legend=dict(xanchor="left", yanchor="middle",

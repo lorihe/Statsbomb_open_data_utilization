@@ -52,7 +52,7 @@ app = Dash(__name__, external_stylesheets=[dbc.themes.ZEPHYR],
 
 app.title = "World Cup 2023 Data Visualization"
 
-server = app.server
+#server = app.server
 app.config.suppress_callback_exceptions = True
 
 
@@ -62,16 +62,17 @@ def description_card():
         id="description",
         children=[
             html.H5("Statsbomb Open Data Visualization",
-                    style = {"width": "90%", "font-weight": "bold", 'color': 'dark-grey'}),
+                    style = {"font-size": "24px", "font-weight": "bold", 'color': 'dark-grey'}),
             html.Img(src=app.get_asset_url("statsbomb.png"),
                      style={"width": "60%", "height": "auto", "margin-bottom": "20px",
                             "margin-left": "18px"}),
 
             html.Div(
                 id="intro",
-                children="Statsbomb has shared well-structured and specified game data of the "
-                         "Women's World Cup 2023. This project visualizes "
-                         "part of it with an emphasis on team tactics.",
+                children="Great appreciation towards Statsbomb for sharing valuable data of the "
+                         "Women's World Cup 2023, as part of their commitment to support women's soccer. "
+                         "This project visualizes the data with an emphasis on team tactics, aiming to extend "
+                         "its usage and recognition",
                 style={"font-size": "14px"}
 
             ),
@@ -172,24 +173,23 @@ app.layout = dbc.Container(
         dbc.Row([
             dbc.Col(
                 html.Div(
-                    id="left-column",
                     children= [
                         html.Div(description_card(), style={"width": "90%"}),
                         html.Div(game_select_card(), style={"width": "90%"})
                     ], style = {'margin-bottom': '20px'}
-                ), width={'size': 3, 'offset': 1},
-                    xs={'size': 11, 'offset': 1}, sm={'size': 11, 'offset': 1}, md={'size': 11, 'offset': 1},
-                    lg={'size': 3, 'offset': 1}, xl={'size': 3, 'offset': 1}
+                ), width={'size': 3},
+                    xs={'size': 11}, sm={'size': 11}, md={'size': 11},
+                    lg={'size': 3}, xl={'size': 3},
+                    style = {'margin-left': '60px'}
             ),
             dbc.Col(
                 html.Div(
-                    id="mid-column",
                     children=[
                         html.H6('a',
-                                style={'margin-top': '20px', 'margin-left': '-39px', 'margin-right': '-37px',
+                                style={'margin-left': '-29px', 'margin-right': '-110px',
                                        'color': 'RGB(180,238,180)', 'backgroundColor': 'RGB(180,238,180)'}),
                         html.H5('Match Overview',
-                                style={'margin-top': '110px'}),
+                                style={'margin-top': '100px'}),
                         html.Div([
                             html.P('Match Date:',
                                    style={'margin-top': '30px', 'font-size': '17px', 'font-weight': 'bold'}),
@@ -212,13 +212,13 @@ app.layout = dbc.Container(
                             html.P(id='team2_manager',
                                    style={'margin-top': '-10px', 'color': 'forestgreen'}),
                             ]
-                        )], style = {'margin-top': '-30px', 'margin-left': '40px', 'margin-right': '35px'}
-                ), width='auto',
-                style={"background-color":"RGB(250,247,247)"},
+                        )], style = {'margin-left': '30px', 'margin-right': '140px'}
+                ),
+                width=2,
+                style={"background-color":"RGB(250,247,247)", 'margin-top': '-10px', 'margin-left': '-40px'},
             ),
             dbc.Col(
                 html.Div(
-                    id="right-column",
                     children=[
                         dbc.Spinner(children = [
                                         dcc.Graph(id="team1-plot",
@@ -229,8 +229,8 @@ app.layout = dbc.Container(
                                         style= {
                                             "width": "180px", "height" : "250px",
                                             "position": "absolute",
-                                            "top": "380px",
-                                            "left": "935px",
+                                            "top": "330px",
+                                            "left": "945px",
                                             "z-index": "2",
                                         })
                                    ],
@@ -238,23 +238,71 @@ app.layout = dbc.Container(
                         dbc.Spinner(children = [
                                     dcc.Graph(id="team2-plot",
                                       config={'displayModeBar': False},
-                                      style= {"margin-top": "-125px", "margin-left": "30px"}),
+                                      style= {"margin-top": "-100px", "margin-left": "30px"}),
                                     dcc.Graph(id="team2-formation",
                                       config={'displayModeBar': False},
                                       style={
                                           "width": "180px", "height": "250px",
                                           "position": "absolute",
-                                          "top": "935px",
-                                          "left": "935px",
+                                          "top": "915px",
+                                          "left": "945px",
                                           "z-index": "2",
                                       })
                                     ],
                                     size="lg", color="lightgreen"),
 
                     ], style={"background-color":"RGB(250,247,247)", "position": "relative",
-                              "margin-top": "-30px"}
-                ), width = 6, xs=12, sm=12, md=12, lg=12, xl=7, style = {'margin-right': '-180px'}
-            )
+                              "margin-top": "-30px", 'margin-left': '-140px', 'height': '1350px'}
+                ), width = 6, xs=12, sm=12, md=12, lg=12, xl=6,
+            ),
+            dbc.Col(
+                html.Div(
+                    children=[
+                        html.H6('a',
+                                style={'margin-right': '-100px',
+                                       'color': 'RGB(180,238,180)', 'backgroundColor': 'RGB(180,238,180)'}),
+                        html.P('Notes',
+                                style={'margin-top': '10px', 'text-decoration': 'underline'}),
+                        html.Div([
+                            html.P('Plot direction:',
+                                   style={'margin-top': '10px', 'font-size': '14px', 'font-weight': 'bold'}),
+                            html.P("Plots unified the play direction of first and second half, which means the goalie "
+                                   "side doesn't switch between the two halves on the plot.",
+                                   style={ 'font-size': '14px', 'margin-top': '-15px'}),
+                            html.P('Opponent carry:',
+                                   style={'margin-top': '10px', 'font-size': '14px', 'font-weight': 'bold'}),
+                            html.P("Indicates the start and end when an opponent player successfully carry the "
+                                   "ball for more then 3.5s. Line doesn't reflect the real trajectory in between start and end.",
+                                   style={'font-size': '14px', 'margin-top': '-15px'}),
+                            html.P('Opponent long pass:',
+                                   style={'margin-top': '10px', 'font-size': '14px', 'font-weight': 'bold'}),
+                            html.P("Indicates opponent players successfully pass and receive the ball over 40 yards."
+                                   " Larger circle indicates sender location, smaller circle indicates receiver location.",
+                                   style={'font-size': '14px', 'margin-top': '-15px', }),
+                            html.P('Shots (w/ and w/o goal):',
+                                   style={'margin-top': '10px', 'font-size': '14px', 'font-weight': 'bold'}),
+                            html.P("Larger dots indicate location of shots, smaller dots and line indicate recent "
+                                   "ball trajectory before the shot.",
+                                   style={'font-size': '14px', 'margin-top': '-15px'}),
+                            html.P('Defense (success and no success):',
+                                   style={'margin-top': '10px', 'font-size': '14px', 'font-weight': 'bold'}),
+                            html.P("Indicates active defense actions, which were classified as 'clearance', 'duel'"
+                                   " or 'interception' in Statsbomb.",
+                                   style={'font-size': '14px', 'margin-top': '-15px'}),
+                            html.P('Formation:',
+                                   style={'margin-top': '10px', 'font-size': '14px', 'font-weight': 'bold'}),
+                            html.P("Only tactical shifts which resulted with formation change were plotted. Click legends to "
+                                   "turn layer on or off. Double-click turns on all layers. Double-click again isolates the selected layer.",
+                                   style={'font-size': '14px', 'margin-top': '-15px'}),
+                            html.P("| The usage of this data is for non-profit educational purpose only. |",
+                                   style={'font-size': '13px', 'margin-top': '335px'}),
+                        ]
+                        )], style={'margin-left': '-100px', 'margin-right': '60px'}
+                ),
+                width=1,
+                style={"background-color": "RGB(250,247,247)",
+                       'margin-top': '-10px', 'margin-right': '-200px', "z-index": "2"},
+            ),
         ], className="h-100 g-0")
     ])
 

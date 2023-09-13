@@ -229,9 +229,9 @@ app.layout = dbc.Container(
                                         dcc.Graph(id = "team1-formation",
                                                   config = {'displayModeBar': False},
                                         style= {
-                                            "width": "180px", "height" : "250px",
+                                            "width": "180px", "height" : "270px",
                                             "position": "absolute",
-                                            "top": "330px",
+                                            "top": "335px",
                                             "left": "945px",
                                             "z-index": "2",
                                         })
@@ -245,9 +245,9 @@ app.layout = dbc.Container(
                                     dcc.Graph(id="team2-formation",
                                       config={'displayModeBar': False},
                                       style={
-                                          "width": "180px", "height": "250px",
+                                          "width": "180px", "height": "270px",
                                           "position": "absolute",
-                                          "top": "915px",
+                                          "top": "920px",
                                           "left": "945px",
                                           "z-index": "2",
                                       })

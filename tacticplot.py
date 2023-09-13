@@ -326,13 +326,13 @@ def formation(team1_name, team1_tuples):
 
     fig = go.Figure(layout=field_layout)
     fig.update_layout(title=dict(text=f'{team1_name} Formation',
-                                 yanchor="middle", x=0.5, y = 0.95, ),
+                                 yanchor="bottom", x=0.5, y=0.96),
                       title_font=dict(family="Roboto, sans-serif", size=14),
-                      margin=dict(l=0, r=0, t=0, b=70),
+                      margin=dict(l=0, r=0, t=20, b=140),
                       xaxis=dict(showgrid=False, zeroline=False), yaxis=dict(showgrid=False, zeroline=False),
-                      legend=dict(xanchor="left", yanchor="middle",
-                                  x=0, y=0, font = dict(family = "Roboto, sans-serif", size = 14)),
-                      paper_bgcolor = "rgba(0,0,0,0)", plot_bgcolor='rgba(0,0,0,0)',
+                      legend=dict(xanchor="left", yanchor="top",
+                                  x=0, y=0, font=dict(family="Roboto, sans-serif", size=14)),
+                      paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor='rgba(0,0,0,0)',
                       )
 
 
@@ -345,11 +345,12 @@ def formation(team1_name, team1_tuples):
         marker=dict(size=8, symbol = 'circle', color='grey'),
     ))
 
+    tac_temp = start_ids
     for tac in team1_tuples[9]:
         m = tac['minute']
         s =tac['second']
         position_ids = [player['position']['id'] for player in tac['tactics']['lineup']]
-        if position_ids != start_ids:
+        if position_ids != tac_temp :
             fig.add_trace(go.Scatter(
                 x=[position_dict[i][0] for i in position_ids],
                 y=[position_dict[i][1] for i in position_ids],
@@ -357,7 +358,8 @@ def formation(team1_name, team1_tuples):
                 name=f'tactical shift {m}:{s}',
                 marker=dict(size=8, symbol='circle', color='tan'),
                 visible='legendonly'
-        ))
+            ))
+            tac_temp = position_ids
     return fig
 
 def formation2(team1_name, team1_tuples):
@@ -366,12 +368,12 @@ def formation2(team1_name, team1_tuples):
 
     fig = go.Figure(layout=field_layout)
     fig.update_layout(title=dict(text=f'{team1_name} Formation',
-                                 yanchor="middle", x=0.5, y=0.95),
+                                 yanchor="bottom", x=0.5, y=0.96),
                       title_font=dict(family="Roboto, sans-serif", size=14),
-                      margin=dict(l=0, r=0, t=0, b=70),
+                      margin=dict(l=0, r=0, t=20, b=140),
                       xaxis=dict(showgrid=False, zeroline=False), yaxis=dict(showgrid=False, zeroline=False),
-                      legend=dict(xanchor="left", yanchor="middle",
-                                  x=0, y=0, font = dict(family = "Roboto, sans-serif", size = 14)),
+                      legend=dict(xanchor="left", yanchor="top",
+                                  x=0, y=0, font=dict(family="Roboto, sans-serif", size=14)),
                       paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor='rgba(0,0,0,0)',
                       )
 
@@ -384,11 +386,12 @@ def formation2(team1_name, team1_tuples):
         marker=dict(size=8, symbol='circle', color='grey'),
     ))
 
+    tac_temp = start_ids
     for tac in team1_tuples[9]:
         m = tac['minute']
         s = tac['second']
         position_ids = [player['position']['id'] for player in tac['tactics']['lineup']]
-        if position_ids != start_ids:
+        if position_ids != tac_temp:
             fig.add_trace(go.Scatter(
                 x=[120-position_dict[i][0] for i in position_ids],
                 y=[80-position_dict[i][1] for i in position_ids],
@@ -397,4 +400,5 @@ def formation2(team1_name, team1_tuples):
                 marker=dict(size=8, symbol='circle', color='tan'),
                 visible='legendonly'
             ))
+            tac_temp = position_ids
     return fig

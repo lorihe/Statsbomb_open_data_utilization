@@ -157,7 +157,7 @@ app.layout = dbc.Container(
             html.Div([
                 html.Div(id="banner1", className="banner",
                          children=[
-                             html.Img(src=app.get_asset_url("github.jpg"),
+                             html.Img(src=app.get_asset_url("github.JPG"),
                                       style={"height": "24px", "margin-top": "3px", 'margin-left': '73px'})
                          ]),
                 html.Div(id="banner2", className="banner",

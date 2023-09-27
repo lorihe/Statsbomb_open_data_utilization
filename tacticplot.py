@@ -49,10 +49,11 @@ def get_events(events):
     carry = [e for e in events if e['type']['id'] == 43 and e['duration'] > 3.5] 
 
     defense = [e for e in events if e['type']['id'] == 9 or 
-                                    (e['type']['id'] == 4 and e['duel']['type']['id'] in [11, 4, 15, 16, 17]) or 
+                                    (e['type']['id'] == 4 and e['duel']['type']['id'] == 11 and e['duel']['outcome'] in [4, 15, 16, 17]) or
                                     (e['type']['id'] == 10 and e['interception']['outcome']['id'] in [4, 15, 16, 17])]
 
-    defense_no = [e for e in events if (e['type']['id'] == 4 and e['duel']['type']['id'] not in [11, 4, 15, 16, 17]) or
+    defense_no = [e for e in events if (e['type']['id'] == 4 and e['duel']['type']['id'] == 11 and e['duel']['outcome'] not in [4, 15, 16, 17]) or
+                                       (e['type']['id'] == 4 and e['duel']['type']['id'] == 10) or
                                        (e['type']['id'] == 10 and e['interception']['outcome']['id'] not in [4, 15, 16, 17])]
 
     passes_l = [e for e in events if e['type']['id'] == 30 and e['pass']['length'] > 40 and 'outcome' not in e['pass']]

@@ -5,6 +5,8 @@ from dash.dependencies import Input,Output
 import requests
 
 from tacticplot import plot, plot2, get_events, formation, formation2
+from positionplot import (plot_contour, plot_ballreceipt, plot_defence,
+                          plot_passlength, plot_passangle, plot_shot, plot_carry)
 
 def load_json(url):
     '''
@@ -46,9 +48,9 @@ team_dict = {match['match_id']:
     for match in json_data_2023}
 
 # Build the app
-app = Dash(__name__, external_stylesheets=[dbc.themes.ZEPHYR],
+app = Dash(__name__, external_stylesheets=[dbc.themes.CERULEAN],
           meta_tags=[{"name": "viewport", "content": "width=device-width,"
-                      "initial-scale=1, maximum-scale=1, maximum-scale=1"}])
+                      "initial-scale=1, maximum-scale=1"}])
 
 app.title = "World Cup 2023 Data Visualization"
 
@@ -63,8 +65,8 @@ def description_card():
     return html.Div(
         id="description",
         children=[
-            html.H5("Statsbomb Open Data Visualization",
-                    style = {"font-size": "24px", "font-weight": "bold", 'color': 'dark-grey'}),
+            html.H5("Statsbomb Open Data Visualization", className="text-dark",
+                    style = {"font-size": "24px", "font-weight": "bold", "margin-left": "18px"}),
             html.Img(src=app.get_asset_url("statsbomb.png"),
                      style={"width": "60%", "height": "auto", "margin-bottom": "20px",
                             "margin-left": "18px"}),
@@ -73,8 +75,7 @@ def description_card():
                 id="intro",
                 children="Great appreciation towards Statsbomb for sharing valuable data of the "
                          "Women's World Cup 2023, as part of their commitment to support women's soccer. "
-                         "This project visualizes the data with an emphasis on team tactics, aiming to extend "
-                         "its usage and recognition.",
+                         "This project visualizes the data with an emphasis on team tactics.",
                 style={"font-size": "14px"}
 
             ),
@@ -96,7 +97,7 @@ def game_select_card():
                 className= "accordion-title",
                 children =
                 [
-                    html.Button(match_dict[match], id=match, style={'width': '46%', 'font-size': '13px',
+                    html.Button(match_dict[match], id=match, style={'width': '48%', 'font-size': '13px',
                                                                     "margin-left": "-13px", "margin-right": "15px"},
                                className="border-0 bg-light font-weight-light my-0")
                     for match in stage_dict['Group Stage']
@@ -105,7 +106,7 @@ def game_select_card():
             ),
             dbc.AccordionItem(
                 [
-                    html.Button(match_dict[match], id=match, style={'width': '46%', 'font-size': '13px',
+                    html.Button(match_dict[match], id=match, style={'width': '48%', 'font-size': '13px',
                                                                     "margin-left": "-13px", "margin-right": "15px"},
                                className="border-0 bg-light font-weight-light my-0")
                     for match in stage_dict['Round of 16']
@@ -114,7 +115,7 @@ def game_select_card():
             ),
             dbc.AccordionItem(
                 [
-                    html.Button(match_dict[match], id=match, style={'width': '46%', 'font-size': '13px',
+                    html.Button(match_dict[match], id=match, style={'width': '48%', 'font-size': '13px',
                                                                     "margin-left": "-13px", "margin-right": "15px"},
                                className="border-0 bg-light font-weight-light my-0")
                     for match in stage_dict['Quarter-finals']
@@ -123,7 +124,7 @@ def game_select_card():
             ),
             dbc.AccordionItem(
                 [
-                    html.Button(match_dict[match], id=match, style={'width': '46%', 'font-size': '13px',
+                    html.Button(match_dict[match], id=match, style={'width': '48%', 'font-size': '13px',
                                                                     "margin-left": "-13px", "margin-right": "15px"},
                                className="border-0 bg-light font-weight-light my-0")
                     for match in stage_dict['Semi-finals']
@@ -154,6 +155,205 @@ def game_select_card():
         html.Div(id="output-div", style={'display': 'none'}),
 
     ])
+
+def position_matrix(events):
+    return html.Div([
+        dbc.Row([
+            dbc.Col(
+                dcc.Graph(figure = plot_contour(events, 'centerback'),
+                          config={'displayModeBar': False}),
+                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
+                lg={'size': 12}, xl={'size': 2}
+            ),
+            dbc.Col(
+                dcc.Graph(figure=plot_defence(events, 'centerback', 0),
+                          config={'displayModeBar': False}),
+                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
+                lg={'size': 12}, xl={'size': 2}
+            ),
+            dbc.Col(
+                dcc.Graph(figure=plot_defence(events, 'centerback', 1),
+                          config={'displayModeBar': False}),
+                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
+                lg={'size': 12}, xl={'size': 2}
+            ),
+            dbc.Col(
+                dcc.Graph(figure = plot_ballreceipt(events, 'centerback', 0),
+                          config={'displayModeBar': False}),
+                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
+                lg={'size': 12}, xl={'size': 2}
+            ),
+            dbc.Col(
+                dcc.Graph(figure = plot_ballreceipt(events, 'centerback', 1),
+                          config={'displayModeBar': False}),
+                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
+                lg={'size': 12}, xl={'size': 2}
+            ),
+            dbc.Col(
+                dcc.Graph(figure = plot_passlength(events, 'centerback'),
+                          config={'displayModeBar': False}),
+                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
+                lg={'size': 12}, xl={'size': 2}
+            ),
+
+        ], style = {'margin-top': '20px'}),
+        dbc.Row([
+            dbc.Col(
+                dcc.Graph(figure = plot_contour(events, 'fullback'),
+                          config={'displayModeBar': False}),
+                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
+                lg={'size': 12}, xl={'size': 2}
+            ),
+            dbc.Col(
+                dcc.Graph(figure=plot_defence(events, 'fullback', 0),
+                          config={'displayModeBar': False}),
+                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
+                lg={'size': 12}, xl={'size': 2}
+            ),
+            dbc.Col(
+                dcc.Graph(figure=plot_defence(events, 'fullback', 1),
+                          config={'displayModeBar': False}),
+                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
+                lg={'size': 12}, xl={'size': 2}
+            ),
+            dbc.Col(
+                dcc.Graph(figure = plot_ballreceipt(events, 'fullback', 0),
+                          config={'displayModeBar': False}),
+                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
+                lg={'size': 12}, xl={'size': 2}
+            ),
+            dbc.Col(
+                dcc.Graph(figure = plot_ballreceipt(events, 'fullback', 1),
+                          config={'displayModeBar': False}),
+                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
+                lg={'size': 12}, xl={'size': 2}
+            ),
+            dbc.Col(
+                dcc.Graph(figure = plot_passangle(events, 'fullback'),
+                          config={'displayModeBar': False}),
+                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
+                lg={'size': 12}, xl={'size': 2}
+            ),
+
+        ], style={'margin-top': '20px'}),
+        dbc.Row([
+            dbc.Col(
+                dcc.Graph(figure = plot_contour(events, 'midfielder'),
+                          config={'displayModeBar': False}),
+                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
+                lg={'size': 12}, xl={'size': 2}
+            ),
+            dbc.Col(
+                dcc.Graph(figure = plot_defence(events, 'midfielder', 0),
+                          config={'displayModeBar': False}),
+                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
+                lg={'size': 12}, xl={'size': 2}
+            ),
+            dbc.Col(
+                dcc.Graph(figure = plot_defence(events, 'midfielder', 1),
+                          config={'displayModeBar': False}),
+                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
+                lg={'size': 12}, xl={'size': 2}
+            ),
+            dbc.Col(
+                dcc.Graph(figure = plot_passlength(events, 'midfielder'),
+                          config={'displayModeBar': False}),
+                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
+                lg={'size': 12}, xl={'size': 2}
+            ),
+            dbc.Col(
+                dcc.Graph(figure = plot_passangle(events, 'midfielder'),
+                          config={'displayModeBar': False}),
+                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
+                lg={'size': 12}, xl={'size': 2}
+            ),
+            dbc.Col(
+                dcc.Graph(figure=plot_shot(events, 'midfielder', 0),
+                          config={'displayModeBar': False}),
+                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
+                lg={'size': 12}, xl={'size': 2}
+            ),
+        ], style={'margin-top': '20px'}),
+        dbc.Row([
+            dbc.Col(
+                dcc.Graph(figure=plot_contour(events, 'winger'),
+                          config={'displayModeBar': False}),
+                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
+                lg={'size': 12}, xl={'size': 2}
+            ),
+            dbc.Col(
+                dcc.Graph(figure=plot_defence(events, 'winger', 0),
+                          config={'displayModeBar': False}),
+                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
+                lg={'size': 12}, xl={'size': 2}
+            ),
+            dbc.Col(
+                dcc.Graph(figure=plot_ballreceipt(events, 'winger', 0),
+                          config={'displayModeBar': False}),
+                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
+                lg={'size': 12}, xl={'size': 2}
+            ),
+            dbc.Col(
+                dcc.Graph(figure=plot_passangle(events, 'winger'),
+                          config={'displayModeBar': False}),
+                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
+                lg={'size': 12}, xl={'size': 2}
+            ),
+            dbc.Col(
+                dcc.Graph(figure=plot_carry(events, 'winger'),
+                          config={'displayModeBar': False}),
+                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
+                lg={'size': 12}, xl={'size': 2}
+            ),
+            dbc.Col(
+                dcc.Graph(figure=plot_shot(events, 'winger', 0),
+                          config={'displayModeBar': False}),
+                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
+                lg={'size': 12}, xl={'size': 2}
+            ),
+
+        ], style={'margin-top': '20px'}),
+        dbc.Row([
+            dbc.Col(
+                dcc.Graph(figure=plot_contour(events, 'striker'),
+                          config={'displayModeBar': False}),
+                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
+                lg={'size': 12}, xl={'size': 2}
+            ),
+            dbc.Col(
+                dcc.Graph(figure=plot_ballreceipt(events, 'striker', 0),
+                          config={'displayModeBar': False}),
+                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
+                lg={'size': 12}, xl={'size': 2}
+            ),
+            dbc.Col(
+                dcc.Graph(figure=plot_ballreceipt(events, 'striker', 1),
+                          config={'displayModeBar': False}),
+                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
+                lg={'size': 12}, xl={'size': 2}
+            ),
+            dbc.Col(
+                dcc.Graph(figure=plot_carry(events, 'striker'),
+                          config={'displayModeBar': False}),
+                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
+                lg={'size': 12}, xl={'size': 2}
+            ),
+            dbc.Col(
+                dcc.Graph(figure=plot_shot(events, 'striker', 0),
+                          config={'displayModeBar': False}),
+                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
+                lg={'size': 12}, xl={'size': 2}
+            ),
+            dbc.Col(
+                dcc.Graph(figure=plot_shot(events, 'striker', 1),
+                          config={'displayModeBar': False}),
+                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
+                lg={'size': 12}, xl={'size': 2}
+            ),
+
+        ], style={'margin-top': '20px'}),
+      ], style={'margin-bottom': '40px'}
+    )
 
 # App layout
 app.layout = dbc.Container(
@@ -186,10 +386,9 @@ app.layout = dbc.Container(
                     children= [
                         html.Div(description_card(), style={"width": "90%"}),
                         html.Div(game_select_card(), style={"width": "90%"})
-                    ], style = {'margin-bottom': '20px'}
+                    ], style = {'margin-left': '20px', 'margin-bottom': '20px'}
                 ), xs={'size': 12}, sm={'size': 12}, md={'size': 12},
-                   lg={'size': 12}, xl={'size': 3},
-                   style = {'margin-left': '80px', 'margin-right': '-30px', }
+                   lg={'size': 3}, xl={'size': 3},
             ),
 
             # Second column shows match overview information
@@ -198,9 +397,9 @@ app.layout = dbc.Container(
                     id = 'column',
                     children=[
                         html.H6('a',
-                                style={'margin-left': '-29px', 'margin-right': '-110px',
+                                style={'margin-left': '-20px',
                                        'color': 'RGB(180,238,180)', 'backgroundColor': 'RGB(180,238,180)'}),
-                        html.H5('Match Overview',
+                        html.H5('Match Overview', className="text-dark",
                                 style={'margin-top': '100px'}),
                         html.Div([
                             html.P('Match Date:',
@@ -225,12 +424,13 @@ app.layout = dbc.Container(
                                    style={'margin-top': '-10px'}),
                             html.P(id='team2_manager',
                                    style={'margin-top': '-10px', 'color': 'forestgreen'}),
+
                             ]
-                        )], style = {'margin-left': '30px', 'margin-right': '140px'}
+                        )], style = {'margin-left': '20px', 'margin-right': '20px'}
                 ),
-                xs=12, sm=12, md=12, lg=2, xl = 2,
-                style={"background-color":"RGB(250,247,247)", 'margin-right': '-140px', 'margin-top': '-10px',
-                       'margin-bottom': '20px', 'height': '1300px'},
+                xs=12, sm=12, md=12, lg=1, xl = 1,
+                style={"background-color":"RGB(250,248,247)", 'margin-top': '-10px',
+                       'margin-left': '-10px', 'height': '1210px'},
             ),
 
             # Third column shows the plots
@@ -240,7 +440,7 @@ app.layout = dbc.Container(
                         dbc.Spinner(children = [
                                         dcc.Graph(id="team1-plot",
                                           config={'displayModeBar': False},
-                                          style= {"margin-top": "20px", "margin-left": "30px"}),
+                                          style= {"margin-top": "-40px", "margin-left": "30px"}),
                                         dcc.Graph(id = "team1-formation",
                                                   config = {'displayModeBar': False},
                                         style= {
@@ -256,23 +456,24 @@ app.layout = dbc.Container(
                         dbc.Spinner(children = [
                                     dcc.Graph(id="team2-plot",
                                       config={'displayModeBar': False},
-                                      style= {"margin-top": "-100px", "margin-left": "30px"}),
+                                      style= {"margin-top": "-110px", "margin-left": "30px",
+                                              'margin-bottom':'-200px'}),
                                     dcc.Graph(id="team2-formation",
                                       config={'displayModeBar': False},
                                       style={
                                           "width": "180px", "height": "270px",
                                           "position": "absolute",
-                                          "top": "920px",
+                                          "top": "900px",
                                           "left": "945px",
                                           "z-index": "2",
                                       })
                                     ],
                                     size="lg", color="lightgreen"),
 
-                    ], style={"background-color":"RGB(250,247,247)", "position": "relative",
-                              "margin-top": "-10px", 'height': '1300px',
-                              "margin-bottom": "20px", 'margin-right': '-40px', "overflow-x": "auto"}
+                    ]
                 ), xs=12, sm=12, md=12, lg=6, xl=6,
+                   style={"background-color": "RGB(250,248,247)", "position": "relative",
+                       'height': '1210px', 'margin-top': '-10px', "overflow-x": "auto"}
             ),
 
             # Forth columns shows the notes
@@ -280,9 +481,8 @@ app.layout = dbc.Container(
                 html.Div(
                     children=[
                         html.H6('a',
-                                style={'width': '280px',
-                                       'color': 'RGB(180,238,180)', 'backgroundColor': 'RGB(180,238,180)'}),
-                        html.P('Notes',
+                                style={'color': 'RGB(180,238,180)', 'backgroundColor': 'RGB(180,238,180)'}),
+                        html.P('Tactic Plot Notes',
                                 style={'margin-top': '10px', 'text-decoration': 'underline'}),
                         html.Div([
                             html.P('Plot direction:',
@@ -315,17 +515,62 @@ app.layout = dbc.Container(
                             html.P("Only tactical shifts which resulted with formation change were plotted. Click legends to "
                                    "turn layer on or off. Double-click turns on all layers. Double-click again isolates the selected layer.",
                                    style={'font-size': '14px', 'margin-top': '-15px'}),
+                        ]),
+                        html.P('Position Metrix Notes (scroll down to view plots)',
+                               style={'margin-top': '40px', 'text-decoration': 'underline'}),
+                        html.Div([
+                            html.P('All matches:',
+                                   style={'margin-top': '10px', 'font-size': '14px', 'font-weight': 'bold'}),
+                            html.P(
+                                "Grey area in plots shows distribution of selected action executed by selected position"
+                                "in all World Cup 2023 matches.",
+                                style={'font-size': '14px', 'margin-top': '-15px'}),
+                            html.P('Plot direction:',
+                                   style={'margin-top': '10px', 'font-size': '14px', 'font-weight': 'bold'}),
+                            html.P(
+                                "All heatmaps have the attacking direction left to right",
+                                style={'font-size': '14px', 'margin-top': '-15px'}),
+                            html.P('Depth & Width:',
+                                   style={'margin-top': '10px', 'font-size': '14px', 'font-weight': 'bold'}),
+                            html.P(
+                                "Depth shows the action coordinate on X axis, x = 0 as the start line, x = 120 as the end line."
+                                "Width shows the action coordinate on Y axis, y = 0 as the side line on goalie's left hand side, y = 80 as"
+                                "the side line on goalie's right hand side",
+                                style={'font-size': '14px', 'margin-top': '-15px'}),
+                            html.P('Passing Angle:',
+                                   style={'margin-top': '10px', 'font-size': '14px', 'font-weight': 'bold'}),
+                            html.P(
+                                "Angle range is [-π, π], positive values between 0 and π indicating an angle clockwise, "
+                                "and negative values between 0 and -π indicating an angle anti-clockwise.",
+                                style={'font-size': '14px', 'margin-top': '-15px'}),
                             html.P("| The usage of this data is for non-profit educational purpose only. |",
-                                   style={'font-size': '13px', 'margin-top': '355px'}),
-                        ],
-                    )], style = {'margin-right': '30px'}
+                                   style={'font-size': '13px', 'margin-top': '48px',
+                                          'margin-right': "5px"}),
+                        ]),
+                    ], style = {'height': '100%',
+                                'margin-left':'6%','margin-right':'10%'}
                 ),
-                xs=12, sm=12, md=12, lg=1, xl=1,
-                style={"background-color": "RGB(250,247,247)",
-                       'margin-top': '-10px', 'margin-bottom': '20px',
-                       'height': '1300px', 'width': '280px', "z-index": "2"},
+                xs=12, sm=12, md=12, lg=2, xl=2,
+                style={'margin-top': '-10px', 'height': '1200px'},
+            )
+        ], className="h-100 gx-0 mx-0 px-0",),
+
+        dbc.Row([
+            dbc.Col(
+                html.Div(
+                    dbc.Spinner(
+                        children = [
+                        dbc.Tabs(id="tabs-output", active_tab="tab-1"),
+                        html.Div(id="tabs-content"),
+                        html.Div(id="team1_position_string", style={"display": "none"}),
+                        html.Div(id="team2_position_string", style={"display": "none"}),
+                ], size="lg", color="lightgreen")
+              )
             ),
-        ], className="h-100 g-0 m-0")
+        ],
+        className="h-100 g-0 m-0"),
+
+
     ])
 
 # Callback 1: Input - button click from match selection memu. Output - match id.
@@ -352,6 +597,8 @@ def get_match(*n_clicks_values):
     Output('team2_manager_string', 'children'),
     Output('team1_manager', 'children'),
     Output('team2_manager', 'children'),
+    Output('team1_position_string', 'children'),
+    Output('team2_position_string', 'children'),
     [Input("output-div", 'children')]
 )
 def get_info(selected_match):
@@ -378,8 +625,11 @@ def get_info(selected_match):
     team1_manager_string = f"{team1_name} manager:"
     team2_manager_string = f"{team2_name} manager:"
 
+    team1_position_string = f"{team1_name} Position Metrics"
+    team2_position_string = f"{team2_name} Position Metrics"
+
     return (time, team1_string, team2_string, team1_manager_string, team2_manager_string,
-            team1_manager, team2_manager)
+            team1_manager, team2_manager, team1_position_string, team2_position_string)
 
 # Callback 3: Input - match id from callback 1. Output - tactic plot and formation plot for both teams
 @app.callback(
@@ -421,6 +671,37 @@ def update_plot(selected_match):
 
     return fig1, fig2, fig3, fig4
     
+@app.callback(
+    Output("tabs-output", "children"),
+    [Input("team1_position_string", "children"),
+    Input("team2_position_string", "children")]
+)
+def update_tab_labels(team1_position_string, team2_position_string):
+    tabs = [
+        dbc.Tab(label=team1_position_string, tab_id="tab-1"),
+        dbc.Tab(label=team2_position_string, tab_id="tab-2"),
+    ]
+    return tabs
+
+@app.callback(
+    Output("tabs-content", "children"),
+    [Input("tabs-output", "active_tab"),
+    Input("output-div", 'children')]
+)
+def render_content(active_tab, selected_match):
+    match_id = int(selected_match)
+    team1 = team_dict[match_id][0]
+    team2 = team_dict[match_id][1]
+
+    url = f'https://raw.githubusercontent.com/statsbomb/open-data/master/data/events/{match_id}.json'
+    match_events = load_json(url)
+
+    if active_tab =='tab-1':
+        events = [event for event in match_events if event['team']['name'] == team1]
+    elif active_tab =='tab-2':
+        events = [event for event in match_events if event['team']['name'] == team2]
+
+    return html.Div(position_matrix(events))
 
 if __name__ == '__main__':
     app.run_server(debug=True, port=1020)

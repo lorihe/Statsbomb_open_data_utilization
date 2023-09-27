@@ -339,13 +339,13 @@ def position_matrix(events):
                 lg={'size': 12}, xl={'size': 2}
             ),
             dbc.Col(
-                dcc.Graph(figure=plot_shot(events, 'striker', 0),
+                dcc.Graph(figure=plot_shot(events, 'striker', 1),
                           config={'displayModeBar': False}),
                 xs={'size': 12}, sm={'size': 12}, md={'size': 12},
                 lg={'size': 12}, xl={'size': 2}
             ),
             dbc.Col(
-                dcc.Graph(figure=plot_shot(events, 'striker', 1),
+                dcc.Graph(figure=plot_shot(events, 'striker', 0),
                           config={'displayModeBar': False}),
                 xs={'size': 12}, sm={'size': 12}, md={'size': 12},
                 lg={'size': 12}, xl={'size': 2}

@@ -488,12 +488,13 @@ app.layout = dbc.Container(
                             html.P('Plot direction:',
                                    style={'margin-top': '10px', 'font-size': '14px', 'font-weight': 'bold'}),
                             html.P("Plots unified the play direction of first and second half, which means the goalie "
-                                   "side doesn't switch between the two halves on the plot.",
+                                   "side doesn't switch between the two halves on the plot. The upper plot attacks from left "
+                                   "to right, the lower one right to left.",
                                    style={ 'font-size': '14px', 'margin-top': '-15px'}),
                             html.P('Opponent carry:',
                                    style={'margin-top': '10px', 'font-size': '14px', 'font-weight': 'bold'}),
-                            html.P("Indicates the start and end when an opponent player successfully carry the "
-                                   "ball for more then 3.5s. Line doesn't reflect the real trajectory in between start and end.",
+                            html.P("Indicates the start and end location when an opponent player successfully carry the "
+                                   "ball for more then 3.5s. Line doesn't reflect the real trajectory of ball.",
                                    style={'font-size': '14px', 'margin-top': '-15px'}),
                             html.P('Opponent long pass:',
                                    style={'margin-top': '10px', 'font-size': '14px', 'font-weight': 'bold'}),
@@ -523,7 +524,7 @@ app.layout = dbc.Container(
                                    style={'margin-top': '10px', 'font-size': '14px', 'font-weight': 'bold'}),
                             html.P(
                                 "Grey area in plots shows distribution of selected action executed by selected position"
-                                "in all World Cup 2023 matches.",
+                                " in all World Cup 2023 matches.",
                                 style={'font-size': '14px', 'margin-top': '-15px'}),
                             html.P('Plot direction:',
                                    style={'margin-top': '10px', 'font-size': '14px', 'font-weight': 'bold'}),
@@ -534,7 +535,7 @@ app.layout = dbc.Container(
                                    style={'margin-top': '10px', 'font-size': '14px', 'font-weight': 'bold'}),
                             html.P(
                                 "Depth shows the action coordinate on X axis, x = 0 as the start line, x = 120 as the end line."
-                                "Width shows the action coordinate on Y axis, y = 0 as the side line on goalie's left hand side, y = 80 as"
+                                " Width shows the action coordinate on Y axis, y = 0 as the side line on goalie's left hand side, y = 80 as "
                                 "the side line on goalie's right hand side",
                                 style={'font-size': '14px', 'margin-top': '-15px'}),
                             html.P('Passing Angle:',

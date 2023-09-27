@@ -33,6 +33,8 @@ def plot_contour(events, position):
                       margin=dict(l=0, r=10, t=0, b=45), height = 260,
                       title = dict(text=f'<b>{position} action heatmap<b>',
                                  xanchor="center", x=0.5, y=0.05))
+    fig.update_layout(dragmode=False)
+
     contour= go.Figure(go.Histogram2dContour(
         x=[e['location'][0] for e in positin_events],
         y=[e['location'][1] for e in positin_events],
@@ -67,6 +69,8 @@ def plot_ballreceipt(events, position, ax):
                                  xanchor="center", x=0.5, y=0.05),
                       legend=dict(orientation='h', x=0, y=1.15),
                       )
+    fig.update_layout(dragmode=False)
+
     fig.add_trace(go.Histogram(
         x=[e[ax] for e in all],
         histnorm='percent', xbins=go.histogram.XBins(size=1),
@@ -114,6 +118,8 @@ def plot_defence(events, position, ax):
                                  xanchor="center", x=0.5, y=0.05),
                       legend=dict(orientation='h', x=0, y=1.15),
                       )
+    fig.update_layout(dragmode=False)
+
     fig.add_trace(go.Histogram(
         x=[e[ax] for e in all],
         histnorm='percent', xbins=go.histogram.XBins(size=1),
@@ -155,6 +161,8 @@ def plot_passlength(events, position):
                                  xanchor="center", x=0.5, y=0.05),
                       legend=dict(orientation='h', x=0, y=1.15),
                       )
+    fig.update_layout(dragmode=False)
+
     fig.add_trace(go.Histogram(
         x=[p['length'] for p in all],
         histnorm='percent', xbins=go.histogram.XBins(size=1),
@@ -192,6 +200,8 @@ def plot_passangle(events, position):
                                  xanchor="center", x=0.5, y=0.05),
                       legend=dict(orientation='h', x=0, y=1.15),
                       )
+    fig.update_layout(dragmode=False)
+
     fig.add_trace(go.Histogram(
         x=[p['angle'] for p in all],
         histnorm='percent', xbins=go.histogram.XBins(size=0.1),
@@ -237,6 +247,8 @@ def plot_shot(events, position, ax):
                                  xanchor="center", x=0.5, y=0.05),
                       legend=dict(orientation='h', x=0, y=1.15),
                       )
+    fig.update_layout(dragmode=False)
+
     fig.add_trace(go.Histogram(
         x=[e[ax] for e in all],
         histnorm='percent', xbins=go.histogram.XBins(size=1),
@@ -278,6 +290,8 @@ def plot_carry(events, position):
                                  xanchor="center", x=0.5, y=0.05),
                       legend=dict(orientation='h', x=0, y=1.15),
                       )
+    fig.update_layout(dragmode=False)
+
     fig.add_trace(go.Histogram(
         x=all,
         histnorm='percent', xbins=go.histogram.XBins(size=0.1),

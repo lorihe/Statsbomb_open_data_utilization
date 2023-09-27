@@ -549,12 +549,12 @@ app.layout = dbc.Container(
                                           'margin-right': "5px"}),
                         ]),
                     ], style = {'height': '100%',
-                                'margin-left':'6%','margin-right':'10%'}
+                                'margin-left':'6%','margin-right':'10%',"overflow-y": "auto"}
                 ),
                 xs=12, sm=12, md=12, lg=2, xl=2,
-                style={'margin-top': '-10px', 'height': '1200px'},
+                style={'margin-top': '-10px', 'margin-bottom': '10px', 'height': '1200px'},
             )
-        ], className="h-100 gx-0 mx-0 px-0",),
+        ], className="h-100 gx-0 mx-0 px-0"),
 
         dbc.Row([
             dbc.Col(

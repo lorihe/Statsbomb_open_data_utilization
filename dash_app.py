@@ -517,8 +517,14 @@ app.layout = dbc.Container(
                                    style={'font-size': '14px', 'margin-top': '-15px'}),
                         ]),
                         html.P('Position Metrix Notes (scroll down to view plots)',
-                               style={'margin-top': '60px', 'text-decoration': 'underline'}),
+                               style={'margin-top': '40px', 'text-decoration': 'underline'}),
                         html.Div([
+                            html.P('All matches:',
+                                   style={'margin-top': '10px', 'font-size': '14px', 'font-weight': 'bold'}),
+                            html.P(
+                                "Grey area in plots shows distribution of selected action executed by selected position"
+                                "in all World Cup 2023 matches.",
+                                style={'font-size': '14px', 'margin-top': '-15px'}),
                             html.P('Plot direction:',
                                    style={'margin-top': '10px', 'font-size': '14px', 'font-weight': 'bold'}),
                             html.P(
@@ -538,11 +544,11 @@ app.layout = dbc.Container(
                                 "and negative values between 0 and -π indicating an angle anti-clockwise.",
                                 style={'font-size': '14px', 'margin-top': '-15px'}),
                             html.P("| The usage of this data is for non-profit educational purpose only. |",
-                                   style={'font-size': '13px', 'margin-top': '80px',
-                                          'margin-right': "100px"}),
+                                   style={'font-size': '13px', 'margin-top': '48px',
+                                          'margin-right': "5px"}),
                         ]),
                     ], style = {'height': '100%',
-                                'margin-left':'10%','margin-right':'10%'}
+                                'margin-left':'6%','margin-right':'10%'}
                 ),
                 xs=12, sm=12, md=12, lg=2, xl=2,
                 style={'margin-top': '-10px', 'height': '1200px'},

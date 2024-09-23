@@ -517,7 +517,7 @@ app.layout = dbc.Container(
                                    "turn layer on or off. Double-click turns on all layers. Double-click again isolates the selected layer.",
                                    style={'font-size': '14px', 'margin-top': '-15px'}),
                         ]),
-                        html.P('Position Metrix Notes (scroll down to view plots)',
+                        html.P('Position Matrix Notes (scroll down to view plots)',
                                style={'margin-top': '40px', 'text-decoration': 'underline'}),
                         html.Div([
                             html.P('All matches:',

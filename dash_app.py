@@ -487,19 +487,16 @@ app.layout = dbc.Container(
                         html.Div([
                             html.P('Plot direction:',
                                    style={'margin-top': '10px', 'font-size': '14px', 'font-weight': 'bold'}),
-                            html.P("Plots unified the play direction of first and second half, which means the goalie "
-                                   "side doesn't switch between the two halves on the plot. The upper plot attacks from left "
-                                   "to right, the lower one right to left.",
+                            html.P("The upper plot attacks from left to right, the lower attacks right to left.",
                                    style={ 'font-size': '14px', 'margin-top': '-15px'}),
                             html.P('Opponent carry:',
                                    style={'margin-top': '10px', 'font-size': '14px', 'font-weight': 'bold'}),
-                            html.P("Indicates the start and end location when an opponent player successfully carry the "
-                                   "ball for more then 3.5s. Line doesn't reflect the real trajectory of ball.",
+                            html.P("An opponent player successfully carry the ball for more then 3.5s.",
                                    style={'font-size': '14px', 'margin-top': '-15px'}),
                             html.P('Opponent long pass:',
                                    style={'margin-top': '10px', 'font-size': '14px', 'font-weight': 'bold'}),
-                            html.P("Indicates opponent players successfully pass and receive the ball over 40 yards."
-                                   " Larger circle indicates sender location, smaller circle indicates receiver location.",
+                            html.P("Opponent players successfully pass and receive the ball over 40 yards."
+                                   " Larger circle indicates receiver location, smaller circle indicates sender location.",
                                    style={'font-size': '14px', 'margin-top': '-15px', }),
                             html.P('Shots (w/ and w/o goal):',
                                    style={'margin-top': '10px', 'font-size': '14px', 'font-weight': 'bold'}),

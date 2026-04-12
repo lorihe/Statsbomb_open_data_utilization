@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 import os
+from typing import OrderedDict as OrderedDictType, Tuple
 
 import dash
 from dash import Dash, html, dcc
@@ -43,7 +44,7 @@ team_dict = {match['match_id']:
 
 # Memoize position-matrix DOM per (match, tab); building ~30 Plotly figures is the main cost.
 _POSITION_MATRIX_CACHE_MAX = 24
-_position_matrix_cache: OrderedDict[tuple[int, str], html.Div] = OrderedDict()
+_position_matrix_cache: OrderedDictType[Tuple[int, str], html.Div] = OrderedDict()
 
 # Dropdowns for stages with many matches; 3rd Place Final and Final each have one game (buttons).
 _STAGE_MATCH_DROPDOWNS = [

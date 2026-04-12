@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any, Dict, List
 
 import orjson
 import requests
@@ -9,7 +10,7 @@ EVENTS_URL_TEMPLATE = (
 
 _EVENTS_DISK_DIR = Path(__file__).resolve().parent / ".cache" / "statsbomb_events"
 
-_events_cache: dict[int, list] = {}
+_events_cache: Dict[int, List[Any]] = {}
 
 
 def load_json_from_url(url: str, timeout: int = 60) -> object:
@@ -18,7 +19,7 @@ def load_json_from_url(url: str, timeout: int = 60) -> object:
     return orjson.loads(response.content)
 
 
-def get_match_events(match_id: int) -> list:
+def get_match_events(match_id: int) -> List[Any]:
     if match_id in _events_cache:
         return _events_cache[match_id]
 

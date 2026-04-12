@@ -1,11 +1,6 @@
-import requests
 import plotly.graph_objects as go
 
 import soccerfield, soccerfield2
-
-def load_json(url):
-    response = requests.get(url)
-    return response.json()
 
 # Generate position dictionary to plot formation. Refer to Statsbomb data specification.
 position_dict = {1:(10, 40),
@@ -18,7 +13,6 @@ position_dict = {1:(10, 40),
 # Set up plot colors.
 goal = 'sienna'
 no_goal = 'goldenrod'
-carry = 'gainsboro'
 defense = 'darkgreen'
 defense_no = 'yellowgreen'
 passes = 'RGB(26,26,26)'
@@ -26,7 +20,8 @@ passes = 'RGB(26,26,26)'
 def get_events(events):
     '''
     :param events: json data which contains events related to a specified team in a specified match
-    :return: multiple tuples, each contains a json data for a certain action
+    :return: (goals, non-goals, goal lead-up seqs, shot lead-up seqs, defense+, defense-,
+              long passes, starting XI events, tactical shift events)
     '''
     
     goal_events = [e for e in events if e['type']['id'] == 16 and 
@@ -34,19 +29,21 @@ def get_events(events):
     no_goal_events = [e for e in events if e['type']['id'] == 16 and 
             e['shot']['outcome']['name'] != 'Goal' and e['period'] != 5]
 
+    pos_by_index = {ev['index']: i for i, ev in enumerate(events)}
+
     goal_seq = {}
-    for e in goal_events:        
-        before_goal_events = events[events.index(e)-5 : events.index(e)+1]
-        before_goal_events = [e for e in before_goal_events if 'location' in e]
+    for e in goal_events:
+        i = pos_by_index[e['index']]
+        before_goal_events = events[i - 5 : i + 1]
+        before_goal_events = [ev for ev in before_goal_events if 'location' in ev]
         goal_seq[e['index']] = before_goal_events
-        
+
     no_goal_seq = {}
     for e in no_goal_events:
-        before_no_goal_events = events[events.index(e)-4 : events.index(e)+1]
-        before_no_goal_events= [e for e in before_no_goal_events if 'location' in e]
-        no_goal_seq[e['index']] = before_no_goal_events    
-    
-    carry = [e for e in events if e['type']['id'] == 43 and e['duration'] > 3.5] 
+        i = pos_by_index[e['index']]
+        before_no_goal_events = events[i - 4 : i + 1]
+        before_no_goal_events = [ev for ev in before_no_goal_events if 'location' in ev]
+        no_goal_seq[e['index']] = before_no_goal_events
 
     defense = [e for e in events if e['type']['id'] == 9 or 
                                     (e['type']['id'] == 4 and e['duel']['type']['id'] == 11 and e['duel']['outcome'] in [4, 15, 16, 17]) or
@@ -61,7 +58,7 @@ def get_events(events):
     starting_XI = [e for e in events if e['type']['id'] == 35]
     tactic_shift = [e for e in events if e['type']['id'] == 36]
 
-    return (goal_events, no_goal_events, goal_seq, no_goal_seq, carry, defense,
+    return (goal_events, no_goal_events, goal_seq, no_goal_seq, defense,
             defense_no, passes_l, starting_XI, tactic_shift)
 
 def plot(team1_name, team1_tuples, team2_tuples):
@@ -87,45 +84,30 @@ def plot(team1_name, team1_tuples, team2_tuples):
 
     fig.update_layout(dragmode= False)
 
-    # Plot opponent carry events
-    fig.add_trace(go.Scatter(x = [None], y = [None], legendgroup = 'carry', name = 'opponent carry (>3.5s)',
-                            mode='lines', line=dict(color=carry, width = 1.8, dash = 'dashdot')))
-    for e in team2_tuples[4]:
-        fig.add_trace(go.Scatter(
-            x = [120-e['location'][0], 120-e['carry']['end_location'][0]],
-            y = [80-e['location'][1], 80-e['carry']['end_location'][1]],
-            legendgroup = 'carry',
-            showlegend = False,
-            mode='lines',
-            line=dict(color=carry, width = 1.6, dash = 'dashdot')
-        ))
-
     # Plot opponent pass events
     fig.add_trace(go.Scatter(x = [None], y = [None], legendgroup = 'passes', name = 'opponent long pass (>40 yards)',
                         mode='lines+markers',
                         marker = dict(symbol = 'circle-open', color = passes, size = 8),
                         line=dict(color=passes, width = 0.8, dash = 'dot')))
-    for e in team2_tuples[7]:
+    if team2_tuples[6]:
+        end_x, end_y, start_x, start_y = [], [], [], []
+        lx, ly = [], []
+        for e in team2_tuples[6]:
+            end_x.append(120 - e['pass']['end_location'][0])
+            end_y.append(80 - e['pass']['end_location'][1])
+            start_x.append(120 - e['location'][0])
+            start_y.append(80 - e['location'][1])
+            lx += [120 - e['location'][0], 120 - e['pass']['end_location'][0], None]
+            ly += [80 - e['location'][1], 80 - e['pass']['end_location'][1], None]
         fig.add_trace(go.Scatter(
-            x = [120-e['pass']['end_location'][0]],
-            y = [80-e['pass']['end_location'][1]],
-            legendgroup = 'passes',
-            showlegend=False,
-            mode='markers', marker=dict(size=6, symbol = 'circle-open', color= passes, opacity=0.9)))
+            x=end_x, y=end_y, legendgroup='passes', showlegend=False, mode='markers',
+            marker=dict(size=6, symbol='circle-open', color=passes, opacity=0.9)))
         fig.add_trace(go.Scatter(
-            x = [120-e['location'][0]],
-            y = [80-e['location'][1]],
-            legendgroup = 'passes',
-            showlegend = False,
-            mode='markers', marker=dict(size=3, symbol = 'circle-open', color= passes, opacity=0.6)))
+            x=start_x, y=start_y, legendgroup='passes', showlegend=False, mode='markers',
+            marker=dict(size=3, symbol='circle-open', color=passes, opacity=0.6)))
         fig.add_trace(go.Scatter(
-            x = [120-e['location'][0], 120-e['pass']['end_location'][0]],
-            y = [80-e['location'][1], 80-e['pass']['end_location'][1]],
-            legendgroup = 'passes',
-            showlegend = False,
-            mode='lines',
-            line=dict(color=passes, width = 0.3, dash = 'dot')
-        ))
+            x=lx, y=ly, legendgroup='passes', showlegend=False, mode='lines',
+            line=dict(color=passes, width=0.3, dash='dot')))
 
     # Plot no goal events
     fig.add_trace(go.Scatter(
@@ -147,49 +129,43 @@ def plot(team1_name, team1_tuples, team2_tuples):
     ))
 
     # Plot no goal recent trajectory events
-    for key, seq in team1_tuples[3].items():
+    if team1_tuples[3]:
+        ngx, ngy, nlx, nly = [], [], [], []
+        for seq in team1_tuples[3].values():
+            ngx.extend([e['location'][0] for e in seq[:-1]])
+            ngy.extend([e['location'][1] for e in seq[:-1]])
+            nlx.extend([ev['location'][0] for ev in seq])
+            nly.extend([ev['location'][1] for ev in seq])
+            nlx.append(None)
+            nly.append(None)
         fig.add_trace(go.Scatter(
-            x = [e['location'][0] for e in seq[:-1]],
-            y = [e['location'][1] for e in seq[:-1]],
-            legendgroup = 'no goal shots',
-            showlegend = False,
-            mode='markers',
-            marker=dict( size=6, symbol = 'circle', color=no_goal, opacity=0.3)
-        ))        
-    for key, seq in team1_tuples[3].items():
+            x=ngx, y=ngy, legendgroup='no goal shots', showlegend=False, mode='markers',
+            marker=dict(size=6, symbol='circle', color=no_goal, opacity=0.3)))
         fig.add_trace(go.Scatter(
-            x=[event['location'][0] for event in seq],  
-            y=[event['location'][1] for event in seq], 
-            legendgroup = 'no goal shots',
-            showlegend = False,
-            mode='lines',
-            line=dict(color=no_goal, width = 0.7)
-        ))
+            x=nlx, y=nly, legendgroup='no goal shots', showlegend=False, mode='lines',
+            line=dict(color=no_goal, width=0.7)))
 
     # Plot goal recent trajectory events
-    for key, seq in team1_tuples[2].items():
+    if team1_tuples[2]:
+        gx, gy, glx, gly = [], [], [], []
+        for seq in team1_tuples[2].values():
+            gx.extend([e['location'][0] for e in seq[:-1]])
+            gy.extend([e['location'][1] for e in seq[:-1]])
+            glx.extend([ev['location'][0] for ev in seq])
+            gly.extend([ev['location'][1] for ev in seq])
+            glx.append(None)
+            gly.append(None)
         fig.add_trace(go.Scatter(
-            x = [e['location'][0] for e in seq[:-1]],
-            y = [e['location'][1] for e in seq[:-1]],
-            legendgroup = 'goal shots',
-            showlegend = False,
-            mode='markers',
-            marker=dict(size=6, symbol = 'circle', color=goal, opacity=0.3)
-        ))        
-    for key, seq in team1_tuples[2].items():
+            x=gx, y=gy, legendgroup='goal shots', showlegend=False, mode='markers',
+            marker=dict(size=6, symbol='circle', color=goal, opacity=0.3)))
         fig.add_trace(go.Scatter(
-            x=[event['location'][0] for event in seq],  
-            y=[event['location'][1] for event in seq], 
-            legendgroup = 'goal shots',
-            showlegend = False,
-            mode='lines',
-            line=dict(color=goal, width = 1.2)
-        ))
+            x=glx, y=gly, legendgroup='goal shots', showlegend=False, mode='lines',
+            line=dict(color=goal, width=1.2)))
 
     # Plot defense success events
     fig.add_trace(go.Scatter(
-        x = [e['location'][0] for e in team1_tuples[5]],
-        y = [e['location'][1] for e in team1_tuples[5]],
+        x = [e['location'][0] for e in team1_tuples[4]],
+        y = [e['location'][1] for e in team1_tuples[4]],
         name = 'defense-success',
         mode='markers',
         marker=dict(size=6, symbol = 'diamond', color=defense, opacity=0.8)
@@ -197,8 +173,8 @@ def plot(team1_name, team1_tuples, team2_tuples):
 
     # Plot defense no success events
     fig.add_trace(go.Scatter(
-        x = [e['location'][0] for e in team1_tuples[6]],
-        y = [e['location'][1] for e in team1_tuples[6]],
+        x = [e['location'][0] for e in team1_tuples[5]],
+        y = [e['location'][1] for e in team1_tuples[5]],
         name = 'defense-no success',
         mode='markers',
         marker=dict(size=6, symbol = 'diamond', color=defense_no, opacity=0.8)
@@ -230,45 +206,30 @@ def plot2(team2_name, team2_tuples, team1_tuples):
 
     fig.update_layout(dragmode=False)
 
-    # Plot opponent carry events
-    fig.add_trace(go.Scatter(x=[None], y=[None], legendgroup='carry', name='opponent carry (>3.5s)',
-                             mode='lines', line=dict(color=carry, width=1.8, dash='dashdot')))
-    for e in team1_tuples[4]:
-        fig.add_trace(go.Scatter(
-            x=[e['location'][0], e['carry']['end_location'][0]],
-            y=[e['location'][1], e['carry']['end_location'][1]],
-            legendgroup='carry',
-            showlegend=False,
-            mode='lines',
-            line=dict(color=carry, width=1.6, dash='dashdot')
-        ))
-
     # Plot opponent pass events
     fig.add_trace(go.Scatter(x=[None], y=[None], legendgroup='passes', name='opponent long pass (>40 yards)',
                              mode='lines+markers',
                              marker=dict(symbol='circle-open', color=passes, size=8),
                              line=dict(color=passes, width=0.8, dash='dot')))
-    for e in team1_tuples[7]:
+    if team1_tuples[6]:
+        end_x, end_y, start_x, start_y = [], [], [], []
+        lx, ly = [], []
+        for e in team1_tuples[6]:
+            end_x.append(e['pass']['end_location'][0])
+            end_y.append(e['pass']['end_location'][1])
+            start_x.append(e['location'][0])
+            start_y.append(e['location'][1])
+            lx += [e['location'][0], e['pass']['end_location'][0], None]
+            ly += [e['location'][1], e['pass']['end_location'][1], None]
         fig.add_trace(go.Scatter(
-            x=[e['pass']['end_location'][0]],
-            y=[e['pass']['end_location'][1]],
-            legendgroup='passes',
-            showlegend=False,
-            mode='markers', marker=dict(size=6, symbol='circle-open', color=passes, opacity=0.9)))
+            x=end_x, y=end_y, legendgroup='passes', showlegend=False, mode='markers',
+            marker=dict(size=6, symbol='circle-open', color=passes, opacity=0.9)))
         fig.add_trace(go.Scatter(
-            x=[e['location'][0]],
-            y=[e['location'][1]],
-            legendgroup='passes',
-            showlegend=False,
-            mode='markers', marker=dict(size=3, symbol='circle-open', color=passes, opacity=0.6)))
+            x=start_x, y=start_y, legendgroup='passes', showlegend=False, mode='markers',
+            marker=dict(size=3, symbol='circle-open', color=passes, opacity=0.6)))
         fig.add_trace(go.Scatter(
-            x=[e['location'][0], e['pass']['end_location'][0]],
-            y=[e['location'][1], e['pass']['end_location'][1]],
-            legendgroup='passes',
-            showlegend=False,
-            mode='lines',
-            line=dict(color=passes, width=0.3, dash='dot')
-        ))
+            x=lx, y=ly, legendgroup='passes', showlegend=False, mode='lines',
+            line=dict(color=passes, width=0.3, dash='dot')))
 
     # Plot no goal events
     fig.add_trace(go.Scatter(
@@ -290,49 +251,43 @@ def plot2(team2_name, team2_tuples, team1_tuples):
     ))
 
     # Plot no goal recent trajectory events
-    for key, seq in team2_tuples[3].items():
+    if team2_tuples[3]:
+        ngx, ngy, nlx, nly = [], [], [], []
+        for seq in team2_tuples[3].values():
+            ngx.extend([120 - e['location'][0] for e in seq[:-1]])
+            ngy.extend([80 - e['location'][1] for e in seq[:-1]])
+            nlx.extend([120 - ev['location'][0] for ev in seq])
+            nly.extend([80 - ev['location'][1] for ev in seq])
+            nlx.append(None)
+            nly.append(None)
         fig.add_trace(go.Scatter(
-            x=[120-e['location'][0] for e in seq[:-1]],
-            y=[80-e['location'][1] for e in seq[:-1]],
-            legendgroup='no goal shots',
-            showlegend=False,
-            mode='markers',
-            marker=dict(size=6, symbol='circle', color=no_goal, opacity=0.3)
-        ))
-    for key, seq in team2_tuples[3].items():
+            x=ngx, y=ngy, legendgroup='no goal shots', showlegend=False, mode='markers',
+            marker=dict(size=6, symbol='circle', color=no_goal, opacity=0.3)))
         fig.add_trace(go.Scatter(
-            x=[120-event['location'][0] for event in seq],
-            y=[80-event['location'][1] for event in seq],
-            legendgroup='no goal shots',
-            showlegend=False,
-            mode='lines',
-            line=dict(color=no_goal, width=0.7)
-        ))
+            x=nlx, y=nly, legendgroup='no goal shots', showlegend=False, mode='lines',
+            line=dict(color=no_goal, width=0.7)))
 
     # Plot goal recent trajectory events
-    for key, seq in team2_tuples[2].items():
+    if team2_tuples[2]:
+        gx, gy, glx, gly = [], [], [], []
+        for seq in team2_tuples[2].values():
+            gx.extend([120 - e['location'][0] for e in seq[:-1]])
+            gy.extend([80 - e['location'][1] for e in seq[:-1]])
+            glx.extend([120 - ev['location'][0] for ev in seq])
+            gly.extend([80 - ev['location'][1] for ev in seq])
+            glx.append(None)
+            gly.append(None)
         fig.add_trace(go.Scatter(
-            x=[120-e['location'][0] for e in seq[:-1]],
-            y=[80-e['location'][1] for e in seq[:-1]],
-            legendgroup='goal shots',
-            showlegend=False,
-            mode='markers',
-            marker=dict(size=6, symbol='circle', color=goal, opacity=0.3)
-        ))
-    for key, seq in team2_tuples[2].items():
+            x=gx, y=gy, legendgroup='goal shots', showlegend=False, mode='markers',
+            marker=dict(size=6, symbol='circle', color=goal, opacity=0.3)))
         fig.add_trace(go.Scatter(
-            x=[120-event['location'][0] for event in seq],
-            y=[80-event['location'][1] for event in seq],
-            legendgroup='goal shots',
-            showlegend=False,
-            mode='lines',
-            line=dict(color=goal, width=1.2)
-        ))
+            x=glx, y=gly, legendgroup='goal shots', showlegend=False, mode='lines',
+            line=dict(color=goal, width=1.2)))
 
     # Plot defense success events
     fig.add_trace(go.Scatter(
-        x=[120-e['location'][0] for e in team2_tuples[5]],
-        y=[80-e['location'][1] for e in team2_tuples[5]],
+        x=[120-e['location'][0] for e in team2_tuples[4]],
+        y=[80-e['location'][1] for e in team2_tuples[4]],
         name='defense-success',
         mode='markers',
         marker=dict(size=6, symbol='diamond', color=defense, opacity=0.8)
@@ -340,8 +295,8 @@ def plot2(team2_name, team2_tuples, team1_tuples):
 
     # Plot defense no success events
     fig.add_trace(go.Scatter(
-        x=[120-e['location'][0] for e in team2_tuples[6]],
-        y=[80-e['location'][1] for e in team2_tuples[6]],
+        x=[120-e['location'][0] for e in team2_tuples[5]],
+        y=[80-e['location'][1] for e in team2_tuples[5]],
         name='defense-no success',
         mode='markers',
         marker=dict(size=6, symbol='diamond', color=defense_no, opacity=0.8)
@@ -371,7 +326,7 @@ def formation(team1_name, team1_tuples):
     fig.update_layout(dragmode=False)
 
     # Get starting XI position id from event tuple
-    start_ids = [player['position']['id'] for player in team1_tuples[8][0]['tactics']['lineup']]
+    start_ids = [player['position']['id'] for player in team1_tuples[7][0]['tactics']['lineup']]
     fig.add_trace(go.Scatter(
         x = [position_dict[i][0] for i in start_ids],
         y = [position_dict[i][1] for i in start_ids],
@@ -382,7 +337,7 @@ def formation(team1_name, team1_tuples):
 
     # Get tactical shift position id from event tuple
     tac_temp = start_ids
-    for tac in team1_tuples[9]:
+    for tac in team1_tuples[8]:
         m = tac['minute']
         s =tac['second']
         position_ids = [player['position']['id'] for player in tac['tactics']['lineup']]
@@ -420,7 +375,7 @@ def formation2(team2_name, team2_tuples):
                       )
     fig.update_layout(dragmode=False)
 
-    start_ids = [player['position']['id'] for player in team2_tuples[8][0]['tactics']['lineup']]
+    start_ids = [player['position']['id'] for player in team2_tuples[7][0]['tactics']['lineup']]
     fig.add_trace(go.Scatter(
         x=[120-position_dict[i][0] for i in start_ids],
         y=[80-position_dict[i][1] for i in start_ids],
@@ -430,7 +385,7 @@ def formation2(team2_name, team2_tuples):
     ))
 
     tac_temp = start_ids
-    for tac in team2_tuples[9]:
+    for tac in team2_tuples[8]:
         m = tac['minute']
         s = tac['second']
         position_ids = [player['position']['id'] for player in tac['tactics']['lineup']]

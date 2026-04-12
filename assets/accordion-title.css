@@ -10,3 +10,7 @@
     height: 40px
 }
 
+/* Bootstrap default collapse is ~350ms; shortening it removes the “lag” before the panel is usable. */
+.collapsing {
+    transition: height 0.12s ease !important;
+}

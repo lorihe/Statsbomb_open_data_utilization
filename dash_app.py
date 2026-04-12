@@ -1,23 +1,20 @@
+from collections import OrderedDict
+from concurrent.futures import ThreadPoolExecutor
+import os
+
 import dash
 from dash import Dash, html, dcc
 import dash_bootstrap_components as dbc
-from dash.dependencies import Input,Output
-import requests
+from dash.dependencies import Input, Output
+from data_loader import get_match_events, load_json_from_url
 
 from tacticplot import plot, plot2, get_events, formation, formation2
-from positionplot import (plot_contour, plot_ballreceipt, plot_defence,
+from positionplot import (build_role_buckets, plot_contour, plot_ballreceipt, plot_defence,
                           plot_passlength, plot_passangle, plot_shot, plot_carry)
-
-def load_json(url):
-    '''
-    Load json data from the given URL.
-    '''
-    response = requests.get(url)
-    return response.json()
 
 # Load the URL of match data for World Cup 2023 from Statsbomb
 url_WC_2023 = 'https://raw.githubusercontent.com/statsbomb/open-data/master/data/matches/72/107.json'
-json_data_2023 = load_json(url_WC_2023)
+json_data_2023 = load_json_from_url(url_WC_2023)
 
 # Sort stage group for user to select match
 stage_dict = {}
@@ -39,13 +36,25 @@ match_dict = {str(match["match_id"]):
 match_dict = {key: value.replace('Korea\xa0(South)', 'South Korea') for key, value in match_dict.items()}
 match_dict = {key: value.replace('United States of America', 'USA') for key, value in match_dict.items()}
 
-# Get a full list of match ids
-match_list = [str(match['match_id']) for match in json_data_2023]
-
 # Get a dictionary with match ids as keys and a tuple of both teams in that match as value
 team_dict = {match['match_id']: 
     (match['home_team']['home_team_name'], match['away_team']['away_team_name'])
     for match in json_data_2023}
+
+# Memoize position-matrix DOM per (match, tab); building ~30 Plotly figures is the main cost.
+_POSITION_MATRIX_CACHE_MAX = 24
+_position_matrix_cache: OrderedDict[tuple[int, str], html.Div] = OrderedDict()
+
+# Dropdowns for stages with many matches; 3rd Place Final and Final each have one game (buttons).
+_STAGE_MATCH_DROPDOWNS = [
+    ("Group Stage", "dd-match-group"),
+    ("Round of 16", "dd-match-r16"),
+    ("Quarter-finals", "dd-match-qf"),
+    ("Semi-finals", "dd-match-sf"),
+]
+_SINGLE_MATCH_3RD = int(stage_dict["3rd Place Final"][0])
+_SINGLE_MATCH_FINAL = int(stage_dict["Final"][0])
+_BTN_STYLE = {"width": "96%", "font-size": "13px", "margin-left": "-8px", "text-align": "left"}
 
 # Build the app
 app = Dash(__name__, external_stylesheets=[dbc.themes.CERULEAN],
@@ -90,270 +99,176 @@ def game_select_card():
     :return: An HTML Div element providing accordion menu for match selection.
     :rtype: dash_html_components.Div
     '''
+    accordion_items = []
+    for stage_title, dd_id in _STAGE_MATCH_DROPDOWNS:
+        opts = [
+            {"label": match_dict[mid], "value": mid}
+            for mid in stage_dict[stage_title]
+        ]
+        accordion_items.append(
+            dbc.AccordionItem(
+                dcc.Dropdown(
+                    id=dd_id,
+                    options=opts,
+                    placeholder="Select match…",
+                    clearable=False,
+                    style={"font-size": "13px", "margin-left": "-8px", "max-width": "100%"},
+                ),
+                title=stage_title,
+                className="accordion-title",
+            )
+        )
+    mid_3rd = str(_SINGLE_MATCH_3RD)
+    mid_fin = str(_SINGLE_MATCH_FINAL)
+    accordion_items.append(
+        dbc.AccordionItem(
+            html.Button(
+                match_dict[mid_3rd],
+                id="btn-match-3rd",
+                n_clicks=0,
+                style=_BTN_STYLE,
+                className="border-0 bg-light font-weight-light my-0",
+            ),
+            title="3rd Place Final",
+            className="accordion-title",
+        )
+    )
+    accordion_items.append(
+        dbc.AccordionItem(
+            html.Button(
+                match_dict[mid_fin],
+                id="btn-match-final",
+                n_clicks=0,
+                style=_BTN_STYLE,
+                className="border-0 bg-light font-weight-light my-0",
+            ),
+            title="Final",
+            className="accordion-title",
+        )
+    )
     return html.Div([
-        dbc.Accordion(
-          [
-            dbc.AccordionItem(
-                className= "accordion-title",
-                children =
-                [
-                    html.Button(match_dict[match], id=match, style={'width': '48%', 'font-size': '13px',
-                                                                    "margin-left": "-13px", "margin-right": "15px"},
-                               className="border-0 bg-light font-weight-light my-0")
-                    for match in stage_dict['Group Stage']
-                ],
-                title="Group Stage"
-            ),
-            dbc.AccordionItem(
-                [
-                    html.Button(match_dict[match], id=match, style={'width': '48%', 'font-size': '13px',
-                                                                    "margin-left": "-13px", "margin-right": "15px"},
-                               className="border-0 bg-light font-weight-light my-0")
-                    for match in stage_dict['Round of 16']
-                ],
-                title="Round of 16"
-            ),
-            dbc.AccordionItem(
-                [
-                    html.Button(match_dict[match], id=match, style={'width': '48%', 'font-size': '13px',
-                                                                    "margin-left": "-13px", "margin-right": "15px"},
-                               className="border-0 bg-light font-weight-light my-0")
-                    for match in stage_dict['Quarter-finals']
-                ],
-                title="Quarter-finals"
-            ),
-            dbc.AccordionItem(
-                [
-                    html.Button(match_dict[match], id=match, style={'width': '48%', 'font-size': '13px',
-                                                                    "margin-left": "-13px", "margin-right": "15px"},
-                               className="border-0 bg-light font-weight-light my-0")
-                    for match in stage_dict['Semi-finals']
-                ],
-                title="Semi-finals"
-            ),
-            dbc.AccordionItem(
-                [
-                    html.Button(match_dict[match], id=match, style={'width': '46%', 'font-size': '13px',
-                                                                    "margin-left": "-13px", "margin-right": "15px"},
-                               className="border-0 bg-light font-weight-light my-0")
-                    for match in stage_dict['3rd Place Final']
-                ],
-                title="3rd Place Final"
-            ),
-            dbc.AccordionItem(
-                [
-                    html.Button(match_dict[match], id=match, style={'width': '46%', 'font-size': '13px',
-                                                                    "margin-left": "-13px", "margin-right": "15px"},
-                               className="border-0 bg-light font-weight-light my-0")
-                    for match in stage_dict['Final']
-                ],
-                title="Final"
-            ),
-          ], flush = True,
-        ),
-
-        html.Div(id="output-div", style={'display': 'none'}),
-
+        dbc.Accordion(accordion_items, flush=True),
+        # Default match id so dependent callbacks run on load without a click.
+        html.Div(id="output-div", style={"display": "none"}, children=3906390),
     ])
 
+_GRAPH_CFG = {'displayModeBar': False}
+_COL = {'size': 12}
+
+# Order must match layout below.
+_POSITION_MATRIX_TASKS = [
+    ('contour', 'centerback'),
+    ('defence', 'centerback', 0),
+    ('defence', 'centerback', 1),
+    ('ballreceipt', 'centerback', 0),
+    ('ballreceipt', 'centerback', 1),
+    ('passlength', 'centerback'),
+    ('contour', 'fullback'),
+    ('defence', 'fullback', 0),
+    ('defence', 'fullback', 1),
+    ('ballreceipt', 'fullback', 0),
+    ('ballreceipt', 'fullback', 1),
+    ('passangle', 'fullback'),
+    ('contour', 'midfielder'),
+    ('defence', 'midfielder', 0),
+    ('defence', 'midfielder', 1),
+    ('ballreceipt', 'midfielder', 0),
+    ('carry', 'midfielder'),
+    ('shot', 'midfielder', 0),
+    ('contour', 'winger'),
+    ('defence', 'winger', 0),
+    ('ballreceipt', 'winger', 0),
+    ('passangle', 'winger'),
+    ('carry', 'winger'),
+    ('shot', 'winger', 0),
+    ('contour', 'striker'),
+    ('ballreceipt', 'striker', 0),
+    ('ballreceipt', 'striker', 1),
+    ('carry', 'striker'),
+    ('shot', 'striker', 1),
+    ('shot', 'striker', 0),
+]
+
+_PM_WORKERS = min(8, max(4, (os.cpu_count() or 4) * 2))
+
+
+def _build_pm_figure(task, by_loc, by_pos):
+    kind = task[0]
+    pos = task[1]
+    if kind == 'contour':
+        return plot_contour(None, pos, role_located=by_loc[pos])
+    if kind == 'defence':
+        return plot_defence(None, pos, task[2], role_located=by_loc[pos])
+    if kind == 'ballreceipt':
+        return plot_ballreceipt(None, pos, task[2], role_located=by_loc[pos])
+    if kind == 'passlength':
+        return plot_passlength(None, pos, role_positioned=by_pos[pos])
+    if kind == 'passangle':
+        return plot_passangle(None, pos, role_positioned=by_pos[pos])
+    if kind == 'carry':
+        return plot_carry(None, pos, role_positioned=by_pos[pos])
+    if kind == 'shot':
+        return plot_shot(None, pos, task[2], role_located=by_loc[pos])
+    raise ValueError(task)
+
+
 def position_matrix(events):
+    by_loc, by_pos = build_role_buckets(events)
+    with ThreadPoolExecutor(max_workers=_PM_WORKERS) as pool:
+        figures = list(pool.map(
+            lambda t: _build_pm_figure(t, by_loc, by_pos),
+            _POSITION_MATRIX_TASKS,
+        ))
+    i = 0
+
+    def next_fig():
+        nonlocal i
+        f = figures[i]
+        i += 1
+        return f
+
     return html.Div([
         dbc.Row([
-            dbc.Col(
-                dcc.Graph(figure = plot_contour(events, 'centerback'),
-                          config={'displayModeBar': False}),
-                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
-                lg={'size': 12}, xl={'size': 2}
-            ),
-            dbc.Col(
-                dcc.Graph(figure=plot_defence(events, 'centerback', 0),
-                          config={'displayModeBar': False}),
-                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
-                lg={'size': 12}, xl={'size': 2}
-            ),
-            dbc.Col(
-                dcc.Graph(figure=plot_defence(events, 'centerback', 1),
-                          config={'displayModeBar': False}),
-                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
-                lg={'size': 12}, xl={'size': 2}
-            ),
-            dbc.Col(
-                dcc.Graph(figure = plot_ballreceipt(events, 'centerback', 0),
-                          config={'displayModeBar': False}),
-                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
-                lg={'size': 12}, xl={'size': 2}
-            ),
-            dbc.Col(
-                dcc.Graph(figure = plot_ballreceipt(events, 'centerback', 1),
-                          config={'displayModeBar': False}),
-                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
-                lg={'size': 12}, xl={'size': 2}
-            ),
-            dbc.Col(
-                dcc.Graph(figure = plot_passlength(events, 'centerback'),
-                          config={'displayModeBar': False}),
-                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
-                lg={'size': 12}, xl={'size': 2}
-            ),
-
-        ], style = {'margin-top': '20px'}),
-        dbc.Row([
-            dbc.Col(
-                dcc.Graph(figure = plot_contour(events, 'fullback'),
-                          config={'displayModeBar': False}),
-                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
-                lg={'size': 12}, xl={'size': 2}
-            ),
-            dbc.Col(
-                dcc.Graph(figure=plot_defence(events, 'fullback', 0),
-                          config={'displayModeBar': False}),
-                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
-                lg={'size': 12}, xl={'size': 2}
-            ),
-            dbc.Col(
-                dcc.Graph(figure=plot_defence(events, 'fullback', 1),
-                          config={'displayModeBar': False}),
-                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
-                lg={'size': 12}, xl={'size': 2}
-            ),
-            dbc.Col(
-                dcc.Graph(figure = plot_ballreceipt(events, 'fullback', 0),
-                          config={'displayModeBar': False}),
-                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
-                lg={'size': 12}, xl={'size': 2}
-            ),
-            dbc.Col(
-                dcc.Graph(figure = plot_ballreceipt(events, 'fullback', 1),
-                          config={'displayModeBar': False}),
-                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
-                lg={'size': 12}, xl={'size': 2}
-            ),
-            dbc.Col(
-                dcc.Graph(figure = plot_passangle(events, 'fullback'),
-                          config={'displayModeBar': False}),
-                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
-                lg={'size': 12}, xl={'size': 2}
-            ),
-
+            dbc.Col(dcc.Graph(figure=next_fig(), config=_GRAPH_CFG), xs=_COL, sm=_COL, md=_COL, lg=_COL, xl={'size': 2}),
+            dbc.Col(dcc.Graph(figure=next_fig(), config=_GRAPH_CFG), xs=_COL, sm=_COL, md=_COL, lg=_COL, xl={'size': 2}),
+            dbc.Col(dcc.Graph(figure=next_fig(), config=_GRAPH_CFG), xs=_COL, sm=_COL, md=_COL, lg=_COL, xl={'size': 2}),
+            dbc.Col(dcc.Graph(figure=next_fig(), config=_GRAPH_CFG), xs=_COL, sm=_COL, md=_COL, lg=_COL, xl={'size': 2}),
+            dbc.Col(dcc.Graph(figure=next_fig(), config=_GRAPH_CFG), xs=_COL, sm=_COL, md=_COL, lg=_COL, xl={'size': 2}),
+            dbc.Col(dcc.Graph(figure=next_fig(), config=_GRAPH_CFG), xs=_COL, sm=_COL, md=_COL, lg=_COL, xl={'size': 2}),
         ], style={'margin-top': '20px'}),
         dbc.Row([
-            dbc.Col(
-                dcc.Graph(figure = plot_contour(events, 'midfielder'),
-                          config={'displayModeBar': False}),
-                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
-                lg={'size': 12}, xl={'size': 2}
-            ),
-            dbc.Col(
-                dcc.Graph(figure = plot_defence(events, 'midfielder', 0),
-                          config={'displayModeBar': False}),
-                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
-                lg={'size': 12}, xl={'size': 2}
-            ),
-            dbc.Col(
-                dcc.Graph(figure = plot_defence(events, 'midfielder', 1),
-                          config={'displayModeBar': False}),
-                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
-                lg={'size': 12}, xl={'size': 2}
-            ),
-            dbc.Col(
-                dcc.Graph(figure = plot_ballreceipt(events, 'midfielder', 0),
-                          config={'displayModeBar': False}),
-                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
-                lg={'size': 12}, xl={'size': 2}
-            ),
-            dbc.Col(
-                dcc.Graph(figure = plot_carry(events, 'midfielder'),
-                          config={'displayModeBar': False}),
-                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
-                lg={'size': 12}, xl={'size': 2}
-            ),
-            dbc.Col(
-                dcc.Graph(figure=plot_shot(events, 'midfielder', 0),
-                          config={'displayModeBar': False}),
-                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
-                lg={'size': 12}, xl={'size': 2}
-            ),
+            dbc.Col(dcc.Graph(figure=next_fig(), config=_GRAPH_CFG), xs=_COL, sm=_COL, md=_COL, lg=_COL, xl={'size': 2}),
+            dbc.Col(dcc.Graph(figure=next_fig(), config=_GRAPH_CFG), xs=_COL, sm=_COL, md=_COL, lg=_COL, xl={'size': 2}),
+            dbc.Col(dcc.Graph(figure=next_fig(), config=_GRAPH_CFG), xs=_COL, sm=_COL, md=_COL, lg=_COL, xl={'size': 2}),
+            dbc.Col(dcc.Graph(figure=next_fig(), config=_GRAPH_CFG), xs=_COL, sm=_COL, md=_COL, lg=_COL, xl={'size': 2}),
+            dbc.Col(dcc.Graph(figure=next_fig(), config=_GRAPH_CFG), xs=_COL, sm=_COL, md=_COL, lg=_COL, xl={'size': 2}),
+            dbc.Col(dcc.Graph(figure=next_fig(), config=_GRAPH_CFG), xs=_COL, sm=_COL, md=_COL, lg=_COL, xl={'size': 2}),
         ], style={'margin-top': '20px'}),
         dbc.Row([
-            dbc.Col(
-                dcc.Graph(figure=plot_contour(events, 'winger'),
-                          config={'displayModeBar': False}),
-                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
-                lg={'size': 12}, xl={'size': 2}
-            ),
-            dbc.Col(
-                dcc.Graph(figure=plot_defence(events, 'winger', 0),
-                          config={'displayModeBar': False}),
-                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
-                lg={'size': 12}, xl={'size': 2}
-            ),
-            dbc.Col(
-                dcc.Graph(figure=plot_ballreceipt(events, 'winger', 0),
-                          config={'displayModeBar': False}),
-                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
-                lg={'size': 12}, xl={'size': 2}
-            ),
-            dbc.Col(
-                dcc.Graph(figure=plot_passangle(events, 'winger'),
-                          config={'displayModeBar': False}),
-                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
-                lg={'size': 12}, xl={'size': 2}
-            ),
-            dbc.Col(
-                dcc.Graph(figure=plot_carry(events, 'winger'),
-                          config={'displayModeBar': False}),
-                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
-                lg={'size': 12}, xl={'size': 2}
-            ),
-            dbc.Col(
-                dcc.Graph(figure=plot_shot(events, 'winger', 0),
-                          config={'displayModeBar': False}),
-                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
-                lg={'size': 12}, xl={'size': 2}
-            ),
-
+            dbc.Col(dcc.Graph(figure=next_fig(), config=_GRAPH_CFG), xs=_COL, sm=_COL, md=_COL, lg=_COL, xl={'size': 2}),
+            dbc.Col(dcc.Graph(figure=next_fig(), config=_GRAPH_CFG), xs=_COL, sm=_COL, md=_COL, lg=_COL, xl={'size': 2}),
+            dbc.Col(dcc.Graph(figure=next_fig(), config=_GRAPH_CFG), xs=_COL, sm=_COL, md=_COL, lg=_COL, xl={'size': 2}),
+            dbc.Col(dcc.Graph(figure=next_fig(), config=_GRAPH_CFG), xs=_COL, sm=_COL, md=_COL, lg=_COL, xl={'size': 2}),
+            dbc.Col(dcc.Graph(figure=next_fig(), config=_GRAPH_CFG), xs=_COL, sm=_COL, md=_COL, lg=_COL, xl={'size': 2}),
+            dbc.Col(dcc.Graph(figure=next_fig(), config=_GRAPH_CFG), xs=_COL, sm=_COL, md=_COL, lg=_COL, xl={'size': 2}),
         ], style={'margin-top': '20px'}),
         dbc.Row([
-            dbc.Col(
-                dcc.Graph(figure=plot_contour(events, 'striker'),
-                          config={'displayModeBar': False}),
-                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
-                lg={'size': 12}, xl={'size': 2}
-            ),
-            dbc.Col(
-                dcc.Graph(figure=plot_ballreceipt(events, 'striker', 0),
-                          config={'displayModeBar': False}),
-                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
-                lg={'size': 12}, xl={'size': 2}
-            ),
-            dbc.Col(
-                dcc.Graph(figure=plot_ballreceipt(events, 'striker', 1),
-                          config={'displayModeBar': False}),
-                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
-                lg={'size': 12}, xl={'size': 2}
-            ),
-            dbc.Col(
-                dcc.Graph(figure=plot_carry(events, 'striker'),
-                          config={'displayModeBar': False}),
-                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
-                lg={'size': 12}, xl={'size': 2}
-            ),
-            dbc.Col(
-                dcc.Graph(figure=plot_shot(events, 'striker', 1),
-                          config={'displayModeBar': False}),
-                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
-                lg={'size': 12}, xl={'size': 2}
-            ),
-            dbc.Col(
-                dcc.Graph(figure=plot_shot(events, 'striker', 0),
-                          config={'displayModeBar': False}),
-                xs={'size': 12}, sm={'size': 12}, md={'size': 12},
-                lg={'size': 12}, xl={'size': 2}
-            ),
-
+            dbc.Col(dcc.Graph(figure=next_fig(), config=_GRAPH_CFG), xs=_COL, sm=_COL, md=_COL, lg=_COL, xl={'size': 2}),
+            dbc.Col(dcc.Graph(figure=next_fig(), config=_GRAPH_CFG), xs=_COL, sm=_COL, md=_COL, lg=_COL, xl={'size': 2}),
+            dbc.Col(dcc.Graph(figure=next_fig(), config=_GRAPH_CFG), xs=_COL, sm=_COL, md=_COL, lg=_COL, xl={'size': 2}),
+            dbc.Col(dcc.Graph(figure=next_fig(), config=_GRAPH_CFG), xs=_COL, sm=_COL, md=_COL, lg=_COL, xl={'size': 2}),
+            dbc.Col(dcc.Graph(figure=next_fig(), config=_GRAPH_CFG), xs=_COL, sm=_COL, md=_COL, lg=_COL, xl={'size': 2}),
+            dbc.Col(dcc.Graph(figure=next_fig(), config=_GRAPH_CFG), xs=_COL, sm=_COL, md=_COL, lg=_COL, xl={'size': 2}),
         ], style={'margin-top': '20px'}),
-      ], style={'margin-bottom': '40px'}
-    )
+        dbc.Row([
+            dbc.Col(dcc.Graph(figure=next_fig(), config=_GRAPH_CFG), xs=_COL, sm=_COL, md=_COL, lg=_COL, xl={'size': 2}),
+            dbc.Col(dcc.Graph(figure=next_fig(), config=_GRAPH_CFG), xs=_COL, sm=_COL, md=_COL, lg=_COL, xl={'size': 2}),
+            dbc.Col(dcc.Graph(figure=next_fig(), config=_GRAPH_CFG), xs=_COL, sm=_COL, md=_COL, lg=_COL, xl={'size': 2}),
+            dbc.Col(dcc.Graph(figure=next_fig(), config=_GRAPH_CFG), xs=_COL, sm=_COL, md=_COL, lg=_COL, xl={'size': 2}),
+            dbc.Col(dcc.Graph(figure=next_fig(), config=_GRAPH_CFG), xs=_COL, sm=_COL, md=_COL, lg=_COL, xl={'size': 2}),
+            dbc.Col(dcc.Graph(figure=next_fig(), config=_GRAPH_CFG), xs=_COL, sm=_COL, md=_COL, lg=_COL, xl={'size': 2}),
+        ], style={'margin-top': '20px'}),
+    ], style={'margin-bottom': '40px'})
 
 # App layout
 app.layout = dbc.Container(
@@ -451,7 +366,7 @@ app.layout = dbc.Container(
                                             "z-index": "2",
                                         })
                                    ],
-                                    size="lg", color="lightgreen"),
+                                    size="lg", color="lightgreen", delay_show=0),
 
                         dbc.Spinner(children = [
                                     dcc.Graph(id="team2-plot",
@@ -468,7 +383,7 @@ app.layout = dbc.Container(
                                           "z-index": "2",
                                       })
                                     ],
-                                    size="lg", color="lightgreen"),
+                                    size="lg", color="lightgreen", delay_show=0),
 
                     ]
                 ), xs=12, sm=12, md=12, lg=6, xl=6,
@@ -489,10 +404,6 @@ app.layout = dbc.Container(
                                    style={'margin-top': '10px', 'font-size': '14px', 'font-weight': 'bold'}),
                             html.P("The upper plot attacks from left to right, the lower attacks right to left.",
                                    style={ 'font-size': '14px', 'margin-top': '-15px'}),
-                            html.P('Opponent carry:',
-                                   style={'margin-top': '10px', 'font-size': '14px', 'font-weight': 'bold'}),
-                            html.P("An opponent player successfully carry the ball for more then 3.5s.",
-                                   style={'font-size': '14px', 'margin-top': '-15px'}),
                             html.P('Opponent long pass:',
                                    style={'margin-top': '10px', 'font-size': '14px', 'font-weight': 'bold'}),
                             html.P("Opponent players successfully pass and receive the ball over 40 yards."
@@ -517,11 +428,11 @@ app.layout = dbc.Container(
                         html.P('Position Matrix Notes (scroll down to view plots)',
                                style={'margin-top': '40px', 'text-decoration': 'underline'}),
                         html.Div([
-                            html.P('All matches:',
+                            html.P('Competition:',
                                    style={'margin-top': '10px', 'font-size': '14px', 'font-weight': 'bold'}),
                             html.P(
                                 "Grey area in plots shows distribution of selected action executed by selected position"
-                                " in all World Cup 2023 matches.",
+                                " across the competition in World Cup 2023.",
                                 style={'font-size': '14px', 'margin-top': '-15px'}),
                             html.P('Plot direction:',
                                    style={'margin-top': '10px', 'font-size': '14px', 'font-weight': 'bold'}),
@@ -562,7 +473,7 @@ app.layout = dbc.Container(
                         html.Div(id="tabs-content"),
                         html.Div(id="team1_position_string", style={"display": "none"}),
                         html.Div(id="team2_position_string", style={"display": "none"}),
-                ], size="lg", color="lightgreen")
+                ], size="lg", color="lightgreen", delay_show=0)
               )
             ),
         ],
@@ -571,20 +482,36 @@ app.layout = dbc.Container(
 
     ])
 
-# Callback 1: Input - button click from match selection memu. Output - match id.
-input_matches = [Input(match, "n_clicks") for match in match_list]
+_MATCH_SELECT_INPUTS = (
+    [Input(dd_id, "value") for _, dd_id in _STAGE_MATCH_DROPDOWNS]
+    + [Input("btn-match-3rd", "n_clicks"), Input("btn-match-final", "n_clicks")]
+)
+
+
 @app.callback(
     Output("output-div", "children"),
-    input_matches
+    _MATCH_SELECT_INPUTS,
+    prevent_initial_call=True,
 )
-def get_match(*n_clicks_values):
-    clicked_match_id = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
-    if not clicked_match_id:
-        match_id = 3906390
-    else:
-        match_id = int(clicked_match_id)
-
-    return match_id
+def get_match_from_select(v_group, v_r16, v_qf, v_sf, n_clicks_3rd, n_clicks_final):
+    ctx = dash.callback_context
+    if not ctx.triggered:
+        return dash.no_update
+    pid = ctx.triggered[0]["prop_id"].split(".")[0]
+    if pid == "btn-match-3rd":
+        return _SINGLE_MATCH_3RD
+    if pid == "btn-match-final":
+        return _SINGLE_MATCH_FINAL
+    val_by_id = {
+        "dd-match-group": v_group,
+        "dd-match-r16": v_r16,
+        "dd-match-qf": v_qf,
+        "dd-match-sf": v_sf,
+    }
+    raw = val_by_id.get(pid)
+    if raw is None:
+        return dash.no_update
+    return int(raw)
 
 # Callback 2: Input - match id from callback 1. Output - a bunch of strings displayed in match overview.
 @app.callback(
@@ -604,7 +531,7 @@ def get_info(selected_match):
     :param selected_match: match id from callback 1
     :return: a bunch of strings
     '''
-    match_info = [m for m in json_data_2023 if m['match_id'] == selected_match][0]
+    match_info = next(m for m in json_data_2023 if m["match_id"] == selected_match)
     time = match_info['match_date']
     team1_score = match_info['home_score']
     team2_score = match_info['away_score']
@@ -649,9 +576,7 @@ def update_plot(selected_match):
     team1_name = ' '.join(team1.split()[:-1])
     team2_name = ' '.join(team2.split()[:-1])
 
-    # Load event data from Statsbomb
-    url = f'https://raw.githubusercontent.com/statsbomb/open-data/master/data/events/{match_id}.json'
-    match_events = load_json(url)
+    match_events = get_match_events(match_id)
 
     # Get tuples of team actions using imported local module
     team1_events = [event for event in match_events if event['team']['name'] == team1]
@@ -660,12 +585,12 @@ def update_plot(selected_match):
     team2_events = [event for event in match_events if event['team']['name'] == team2]
     team2_tuples = get_events(team2_events)
 
-    # Generate plots using imported local module
-    fig1 = plot(team1_name, team1_tuples, team2_tuples)
-    fig2 = plot2(team2_name, team2_tuples, team1_tuples)
-
-    fig3 = formation(team1_name, team1_tuples)
-    fig4 = formation2(team2_name, team2_tuples)
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        f1 = pool.submit(plot, team1_name, team1_tuples, team2_tuples)
+        f2 = pool.submit(plot2, team2_name, team2_tuples, team1_tuples)
+        f3 = pool.submit(formation, team1_name, team1_tuples)
+        f4 = pool.submit(formation2, team2_name, team2_tuples)
+        fig1, fig2, fig3, fig4 = f1.result(), f2.result(), f3.result(), f4.result()
 
     return fig1, fig2, fig3, fig4
     
@@ -687,19 +612,34 @@ def update_tab_labels(team1_position_string, team2_position_string):
     Input("output-div", 'children')]
 )
 def render_content(active_tab, selected_match):
+    active_tab = active_tab or "tab-1"
+    if active_tab not in ("tab-1", "tab-2"):
+        active_tab = "tab-1"
+
     match_id = int(selected_match)
+    cache_key = (match_id, active_tab)
+    if cache_key in _position_matrix_cache:
+        _position_matrix_cache.move_to_end(cache_key)
+        return _position_matrix_cache[cache_key]
+
     team1 = team_dict[match_id][0]
     team2 = team_dict[match_id][1]
 
-    url = f'https://raw.githubusercontent.com/statsbomb/open-data/master/data/events/{match_id}.json'
-    match_events = load_json(url)
+    match_events = get_match_events(match_id)
 
-    if active_tab =='tab-1':
-        events = [event for event in match_events if event['team']['name'] == team1]
-    elif active_tab =='tab-2':
-        events = [event for event in match_events if event['team']['name'] == team2]
+    if active_tab == "tab-1":
+        events = [event for event in match_events if event["team"]["name"] == team1]
+    else:
+        events = [event for event in match_events if event["team"]["name"] == team2]
 
-    return html.Div(position_matrix(events))
+    div = html.Div(position_matrix(events))
+    _position_matrix_cache[cache_key] = div
+    _position_matrix_cache.move_to_end(cache_key)
+    while len(_position_matrix_cache) > _POSITION_MATRIX_CACHE_MAX:
+        _position_matrix_cache.popitem(last=False)
+    return div
 
 if __name__ == '__main__':
-    app.run_server(debug=True, port=1020)
+    port = int(os.getenv("PORT", "1080"))
+    debug = os.getenv("DASH_DEBUG", "").lower() in {"1", "true", "yes"}
+    app.run(host="0.0.0.0", port=port, debug=debug, threaded=True)
